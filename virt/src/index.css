@@ -1,0 +1,45 @@
+@font-face {
+  font-family: "Jelly";
+  font-display: block;
+  src: url("https://yeemachine.github.io/kalidoface-live2d-models/Font/kalidoface-jelly.ttf") format("truetype");
+}
+.preview {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #222;
+}
+video {
+  max-width: 400px;
+  height: auto;
+  transform: scale(-1, 1);
+}
+.preview canvas {
+  transform: scale(-1, 1);
+  background: #222;
+}
+body {
+  margin: 0;
+}
+canvas {
+  background-color: #aaa;
+  display: block;
+}
+.guides {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: auto;
+  width: 100%;
+  z-index: 1;
+}
+
+@media only screen and (max-width: 600px) {
+  video {
+      max-width: 160px;
+  }
+}

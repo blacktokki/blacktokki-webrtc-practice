@@ -10,4 +10,4 @@
 // document.body.appendChild(component());
 import "./index.css"
 import "./model"
-import "./rtc"
+// import "./rtc"

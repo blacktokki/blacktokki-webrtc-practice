@@ -216,5 +216,5 @@ const {
   // pass facemesh callback function
   facemesh.onResults(onResults);
   startCamera();
-  })//();
+  })();
   

@@ -8,8 +8,8 @@ function App() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
-      <VirtualCam/>
-      {/* <LocalCam/> */}
+      {/* <VirtualCam/> */}
+      <LocalCam/>
       <RemoteCam/>
     </SafeAreaView>
   );

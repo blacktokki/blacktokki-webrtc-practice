@@ -1,30 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  Button,
-  SafeAreaView,
-  StatusBar,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { RTCView, mediaDevices, RTCPeerConnection, MediaStream } from "react-native-webrtc-web-shim";
+import React, { useState, useRef } from "react";
+import {Button,Text, TextInput, View} from "react-native";
+import { RTCView, RTCPeerConnection, MediaStream } from "react-native-webrtc-web-shim";
 import useWebsocket from "./useWebsocket";
-
-const peerConstraints = {
-	iceServers: [
-		{
-			urls: 'stun:stun.l.google.com:19302'
-		}
-	]
-};
-
-const sessionConstraints = {
-	mandatory: {
-		OfferToReceiveAudio: true,
-		OfferToReceiveVideo: true,
-		VoiceActivityDetection: true
-	}
-};
+import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 
 export default ()=>{
   const pcRef = useRef<{pc?:RTCPeerConnection, name?:string}>({})
@@ -38,15 +16,7 @@ export default ()=>{
       const peerConnection = pcRef.current.pc
       if (!peerConnection)
         return
-      peerConnection.addEventListener( 'icecandidate', event => {
-        // When you find a null candidate then there are no more candidates.
-        // Gathering of candidates has finished.
-        
-        if ( !event.candidate ) { return; };
-        // Send the event.candidate onto the person you're calling.
-        // Keeping to Trickle ICE Standards, you should send the candidates immediately.
-        websocketRef.current.send(JSON.stringify({type:'ICEcandidate', data:{user:response.data.caller, rtcMessage:event.candidate}}))
-      });
+      peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, websocketRef.current, response.data.caller));
       const offerDescription = new RTCSessionDescription(response.data.rtcMessage);
       await peerConnection.setRemoteDescription( offerDescription );
       const answerDescription = await peerConnection.createAnswer( sessionConstraints );
@@ -56,17 +26,8 @@ export default ()=>{
       const streams = pcRef.current.pc.getRemoteStreams()
       setStream(streams[streams.length - 1])
     }
-    if (type == "ICEcandidate" && pcRef.current.name == response.data.sender){
-      const message = response.data.rtcMessage
-      const candidate = new RTCIceCandidate({
-          sdpMLineIndex: message.sdpMLineIndex,
-          candidate: message.candidate
-      });
-      if (pcRef.current.pc) {
-          console.log("ICE candidate Added");
-          pcRef.current.pc.addIceCandidate(candidate);
-      }
-    }
+    if (type == "ICEcandidate")
+      onICEcandidate(pcRef.current.pc,pcRef.current.name, response.data, true)
   })
   const start = ()=>{
     console.log("start");
@@ -90,16 +51,16 @@ export default ()=>{
   };
 
   return (
-    <View style={{ flex: 1, borderWidth:1}}>
-      {stream && <RTCView stream={stream} style={{ flex: 1, borderWidth:5}} />}
-      <View style={{position:"absolute", width:'100%', height:'100%', justifyContent:'flex-end'}}>
-        <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+    <View style={camStyle.container}>
+      {stream && <RTCView stream={stream} style={camStyle.cam} />}
+      <View style={camStyle.bottonContainer}>
+        <View style={camStyle.buttonBar}>
           {stream?
             <Text style={{borderWidth:1, flex:1}}>{name}</Text>:
             <TextInput style={{borderWidth:1, flex:1}} value={name} onChangeText={setName}/>
           }
         </View>
-        <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+        <View style={camStyle.buttonBar}>
           <Button title="Start" onPress={start} />
           <Button title="Stop" onPress={stop} />
         </View>

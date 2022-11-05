@@ -1,23 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
-import {Button, Text, TextInput, View} from "react-native";
-import { RTCView, mediaDevices, RTCPeerConnection, MediaStream } from "react-native-webrtc-web-shim";
+import React, { useState, useRef } from "react";
+import {Button, View} from "react-native";
+import { RTCView, mediaDevices, RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
 import useWebsocket from "./useWebsocket";
-
-const peerConstraints = {
-	iceServers: [
-		{
-			urls: 'stun:stun.l.google.com:19302'
-		}
-	]
-};
-
-const sessionConstraints = {
-	mandatory: {
-		OfferToReceiveAudio: true,
-		OfferToReceiveVideo: true,
-		VoiceActivityDetection: true
-	}
-};
+import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 
 const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}, websocketRef:{current:WebSocket})=>{
   pcRefCurrent.stream && pcRefCurrent.pc.addStream( pcRefCurrent.stream );
@@ -35,16 +20,7 @@ export default ()=>{
     if (type == 'call_ready'){
       console.log('1 call_ready')
       const peerConnection = new RTCPeerConnection( peerConstraints );
-      peerConnection.addEventListener( 'icecandidate', event => {
-      
-        // When you find a null candidate then there are no more candidates.
-        // Gathering of candidates has finished.
-        if ( !event.candidate ) { return; };
-        
-        // Send the event.candidate onto the person you're calling.
-        // Keeping to Trickle ICE Standards, you should send the candidates immediately.
-        websocketRef.current.send(JSON.stringify({type:'ICEcandidate', data:{user:response.data.sender, rtcMessage:event.candidate}}))
-      });
+      peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, websocketRef.current, response.data.sender));
       pcRef.current.pc = peerConnection
       pcRef.current.name = response.data.sender
       createOffer(pcRef.current, websocketRef)
@@ -55,21 +31,8 @@ export default ()=>{
       const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
       await pcRef.current.pc.setRemoteDescription( answerDescription );
     }
-    if (type == "ICEcandidate" && pcRef.current.name == response.data.sender){
-      const message = response.data.rtcMessage
-      const candidate = new RTCIceCandidate({
-          sdpMLineIndex: message.sdpMLineIndex,
-          candidate: message.candidate
-      });
-
-      if (pcRef.current.pc) {
-          console.log("ICE candidate Added");
-          pcRef.current.pc.remoteDescription && pcRef.current.pc.addIceCandidate(candidate);
-      } else {
-          console.log("ICE candidate Pushed");
-          // iceCandidatesFromCaller.push(candidate);
-      }
-    }
+    if (type == "ICEcandidate")
+      onICEcandidate(pcRef.current.pc, pcRef.current.name, response.data, false)
   })
   const start = async () => {
     console.log("start");
@@ -86,21 +49,19 @@ export default ()=>{
   };
 
   const stop = async ()=>{
+    console.log("stop");
     if(pcRef.current.stream){
-      stream.getTracks().map(
-        track => track.stop()
-        //track => track.enabled = false
-      );
+      stream.getTracks().map(track => track.stop());
       pcRef.current.stream = undefined
       setStream(undefined)
     }
   }
   
   return (
-    <View style={{ flex: 1, borderWidth:1}}>
-      {stream && <RTCView stream={stream} style={{ flex: 1, borderWidth:5}} />}
-      <View style={{position:"absolute", width:'100%', height:'100%', justifyContent:'flex-end'}}>
-        <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+    <View style={camStyle.container}>
+      {stream && <RTCView stream={stream} style={camStyle.cam} />}
+      <View style={camStyle.bottonContainer}>
+        <View style={camStyle.buttonBar}>
           <Button title="Start" onPress={start} />
           <Button title="Stop" onPress={stop} />
         </View>

@@ -18,7 +18,7 @@
     "react-native-web": "~0.18.7",
     "react-native-webrtc": "^1.94.1",
     "react-native-webrtc-web-shim": "^1.0.3",
-    "react-native-webview": "^11.23.1"
+    "react-native-webview": "11.23.0"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",

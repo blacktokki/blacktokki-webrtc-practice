@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
-import {Button, View} from "react-native";
+import {Button, View, Text} from "react-native";
 import { RTCView, mediaDevices, RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
-import useWebsocket from "./useWebsocket";
+import useWebsocket, { getName } from "./useWebsocket";
 import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 
 export const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}, websocketRef:{current:WebSocket})=>{
@@ -32,7 +32,7 @@ export const websocketOnMessage = async(response, pcRef, websocketRef)=>{
 }
 
 export default ()=>{
-  const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}>({})
+  const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string, myName?:string}>({})
   const [stream, setStream] = useState<MediaStream>()
   const websocketRef = useWebsocket(response=>websocketOnMessage(response, pcRef, websocketRef))
 
@@ -41,6 +41,7 @@ export default ()=>{
     if (!pcRef.current.stream) {
       try {
         pcRef.current.stream = await mediaDevices.getUserMedia({audio:true, video:true});
+        pcRef.current.myName = getName()
         setStream(pcRef.current.stream)
         if (pcRef.current.pc)
           createOffer(pcRef.current, websocketRef)
@@ -55,6 +56,7 @@ export default ()=>{
     if(pcRef.current.stream){
       stream.getTracks().map(track => track.stop());
       pcRef.current.stream = undefined
+      pcRef.current.myName = undefined
       setStream(undefined)
     }
   }
@@ -63,6 +65,9 @@ export default ()=>{
     <View style={camStyle.container}>
       {stream && <RTCView stream={stream} style={camStyle.cam} />}
       <View style={camStyle.bottonContainer}>
+        <View style={camStyle.buttonBar}>
+          <Text style={{flex:1}}>{pcRef.current.myName}</Text>
+        </View>
         <View style={camStyle.buttonBar}>
           <Button title="Start" onPress={start} />
           <Button title="Stop" onPress={stop} />

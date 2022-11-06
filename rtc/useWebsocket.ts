@@ -2,6 +2,10 @@ import { useEffect, useRef } from "react";
 
 let myName;
 
+export const getName = ()=>{
+    return myName
+}
+
 const createWebsocket = ()=>{
     const callSocket = new WebSocket('ws://localhost:8000/ws/');
     callSocket.onopen = event =>{

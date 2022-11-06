@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import {Button,Text, TextInput, View} from "react-native";
-import { RTCView, RTCPeerConnection, MediaStream } from "react-native-webrtc-web-shim";
+import { RTCView, RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
 import useWebsocket from "./useWebsocket";
 import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 

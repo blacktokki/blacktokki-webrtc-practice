@@ -20,10 +20,7 @@ export const sessionConstraints = {
 export const onICEcandidate = (pc:any, name:string, data:any, ignoreRemoteDesc:boolean)=>{
 	if(name == data.sender){
 	const message = data.rtcMessage
-		const candidate = new RTCIceCandidate({
-			sdpMLineIndex: message.sdpMLineIndex,
-			candidate: message.candidate
-		});
+		const candidate = new RTCIceCandidate(message);
 		if (pc) {
 			console.log("ICE candidate Added");
 			(ignoreRemoteDesc || pc.remoteDescription) && pc.addIceCandidate(candidate);

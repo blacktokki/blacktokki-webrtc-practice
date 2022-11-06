@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 
-const myName = (Math.random()*100).toString()
+let myName;
 
 const createWebsocket = ()=>{
     const callSocket = new WebSocket('ws://localhost:8000/ws/');
     callSocket.onopen = event =>{
+        myName = (Math.floor(Math.random()*100)).toString();
         console.log("name", myName)
         //let's send myName to the socket
         callSocket.send(JSON.stringify({
@@ -14,9 +15,15 @@ const createWebsocket = ()=>{
             }
         }));
     }
-    callSocket.addEventListener('close',() =>{
+    callSocket.addEventListener('close',(e) =>{
         console.warn('socket closed');
-        socket = createWebsocket()
+        socket = null
+        if (myName){
+            setTimeout(()=>{
+                console.warn('socket reconnected');
+                createWebsocket()
+            }, 2000)
+        }
     })
     return callSocket
 }
@@ -29,8 +36,13 @@ const socketAddEventListener = (onMessage, websocketRef)=>{
     const _onClose =  ()=>{
         websocketRef.current.removeEventListener('message', _onMessage)
         websocketRef.current.removeEventListener('close', _onClose)
-        websocketRef.current = socket
-        socketAddEventListener(onMessage, websocketRef)
+        const interval = setInterval(()=>{
+            if(socket){
+                websocketRef.current = socket
+                socketAddEventListener(onMessage, websocketRef)
+                clearInterval(interval)
+            }
+        },2050)
     }
     websocketRef.current.addEventListener('message', _onMessage)
     websocketRef.current.addEventListener('close', _onClose)
@@ -43,8 +55,10 @@ const socketAddEventListener = (onMessage, websocketRef)=>{
 export default (onMessage?:(response:any)=>any)=>{
     const websocketRef = useRef(socket);
     useEffect(()=>{
-        const listener = socketAddEventListener(onMessage, websocketRef)
-        return ()=>listener()
+        if (websocketRef.current){
+            const listener = socketAddEventListener(onMessage, websocketRef)
+            return ()=>listener()
+        }
     }, [])
     return websocketRef
 }

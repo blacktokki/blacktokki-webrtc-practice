@@ -20,13 +20,12 @@ video {
 }
 .preview canvas {
   transform: scale(-1, 1);
-  background: #222;
 }
 body {
   margin: 0;
+  background: #aaa;
 }
 canvas {
-  background-color: #aaa;
   display: block;
 }
 .guides {
@@ -38,8 +37,15 @@ canvas {
   z-index: 1;
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 960px) {
   video {
-      max-width: 160px;
+      max-width: 200px;
   }
 }
+
+@media only screen and (max-width: 480px) {
+  video {
+      max-width: 100px;
+  }
+}
+

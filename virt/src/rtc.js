@@ -30,7 +30,6 @@ const send = async(data)=>{
 }
 
 const listener = sendData => {
-    console.log('child receive', sendData)
     const { data, type } = sendData;
     if (type === "answer_call") {
         console.log('(virtual)3 call_answered')
@@ -46,7 +45,10 @@ const listener = sendData => {
         peerConnection.addIceCandidate(candidate);
     }
 }
-const nativeListener = event => {if (event.data.type!= 'webpackOk') listener(JSON.parse(event.data))}
+const nativeListener = event => {
+    // console.log('child receive', event.data)
+    if (event.data.type!= 'webpackOk') listener(JSON.parse(event.data))
+}
 
 const peerConnection = new RTCPeerConnection( peerConstraints );
 
@@ -67,9 +69,13 @@ if (window.ReactNativeWebView) {
     document.addEventListener("message", nativeListener);
     /** ios */
     window.addEventListener("message", nativeListener);
+    window.innerWidth = window.outerWidth
+    window.innerHeight = window.outerHeight
 }
 else{
     window.addEventListener("message", nativeListener);
 }
 
 init()
+send({type:'console', data:{w:window.innerWidth, h:window.innerHeight}})
+send({type:'console', data:{w:window.outerWidth, h:window.outerHeight}})

@@ -169,25 +169,25 @@ const {
   
   // load live2d model
   currentModel = await Live2DModel.from(modelUrl, { autoInteract: false });
-  currentModel.scale.set(0.3);
+  currentModel.scale.set(0.3 * (window.innerHeight/768));
   currentModel.interactive = true;
   currentModel.anchor.set(0.5, 0.5);
   currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.8);
   
   // Add events to drag model
-  currentModel.on("pointerdown", (e) => {
-      currentModel.offsetX = e.data.global.x - currentModel.position.x;
-      currentModel.offsetY = e.data.global.y - currentModel.position.y;
-      currentModel.dragging = true;
-  });
-  currentModel.on("pointerup", (e) => {
-      currentModel.dragging = false;
-  });
-  currentModel.on("pointermove", (e) => {
-      if (currentModel.dragging) {
-          currentModel.position.set(e.data.global.x - currentModel.offsetX, e.data.global.y - currentModel.offsetY);
-      }
-  });
+//   currentModel.on("pointerdown", (e) => {
+//       currentModel.offsetX = e.data.global.x - currentModel.position.x;
+//       currentModel.offsetY = e.data.global.y - currentModel.position.y;
+//       currentModel.dragging = true;
+//   });
+//   currentModel.on("pointerup", (e) => {
+//       currentModel.dragging = false;
+//   });
+//   currentModel.on("pointermove", (e) => {
+//       if (currentModel.dragging) {
+//           currentModel.position.set(e.data.global.x - currentModel.offsetX, e.data.global.y - currentModel.offsetY);
+//       }
+//   });
   
   // Add mousewheel events to scale model
   // document.querySelector("#live2d").addEventListener("wheel", (e) => {
@@ -218,3 +218,6 @@ const {
   startCamera();
   })();
   
+  export {
+    currentModel
+}

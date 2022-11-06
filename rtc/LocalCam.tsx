@@ -4,36 +4,38 @@ import { RTCView, mediaDevices, RTCPeerConnection, MediaStream, RTCSessionDescri
 import useWebsocket from "./useWebsocket";
 import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 
-const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}, websocketRef:{current:WebSocket})=>{
+export const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}, websocketRef:{current:WebSocket})=>{
   pcRefCurrent.stream && pcRefCurrent.pc.addStream( pcRefCurrent.stream );
   const offerDescription = await pcRefCurrent.pc.createOffer( sessionConstraints );
   await pcRefCurrent.pc.setLocalDescription( offerDescription );
-  console.log(websocketRef.current)
   websocketRef.current.send(JSON.stringify({type:'call', data:{name:pcRefCurrent.name, rtcMessage:offerDescription}}))
+}
+
+export const websocketOnMessage = async(response, pcRef, websocketRef)=>{
+  let type = response.type;
+  if (type == 'call_ready'){
+    console.log('1 call_ready')
+    const peerConnection = new RTCPeerConnection( peerConstraints );
+    peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, websocketRef.current, response.data.sender));
+    pcRef.current.pc = peerConnection
+    pcRef.current.name = response.data.sender
+    createOffer(pcRef.current, websocketRef)
+  }
+  
+  if (type == "call_answered"){
+    console.log('3 call_answered')
+    const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
+    await pcRef.current.pc.setRemoteDescription( answerDescription );
+  }
+  if (type == "ICEcandidate")
+    onICEcandidate(pcRef.current.pc, pcRef.current.name, response.data, false)
 }
 
 export default ()=>{
   const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string}>({})
-  const [stream, setStream] =useState<MediaStream>()
-  const websocketRef = useWebsocket(async(response)=>{
-    let type = response.type;
-    if (type == 'call_ready'){
-      console.log('1 call_ready')
-      const peerConnection = new RTCPeerConnection( peerConstraints );
-      peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, websocketRef.current, response.data.sender));
-      pcRef.current.pc = peerConnection
-      pcRef.current.name = response.data.sender
-      createOffer(pcRef.current, websocketRef)
-    }
-    
-    if (type == "call_answered"){
-      console.log('3 call_answered')
-      const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
-      await pcRef.current.pc.setRemoteDescription( answerDescription );
-    }
-    if (type == "ICEcandidate")
-      onICEcandidate(pcRef.current.pc, pcRef.current.name, response.data, false)
-  })
+  const [stream, setStream] = useState<MediaStream>()
+  const websocketRef = useWebsocket(response=>websocketOnMessage(response, pcRef, websocketRef))
+
   const start = async () => {
     console.log("start");
     if (!pcRef.current.stream) {

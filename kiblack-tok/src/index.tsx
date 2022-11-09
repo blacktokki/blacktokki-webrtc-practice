@@ -1,8 +1,11 @@
 export { default as useColorScheme } from './hooks/useColorScheme';
-export { default as Navigation, pushScreenModule } from './navigation';
+export { default as Navigation, initScreenModule } from './navigation';
 export { default as Config } from './navigation/Config';
-import { screenKeys } from './navigation'
 import _ from 'lodash';
+import { initScreenModule } from './navigation';
+import { pushNavigators } from './navigation/DrawerNavigator';
+import { pushPathConfig } from './navigation/LinkingConfiguration';
+import { ScreenPackage } from './types';
 
 if (process.versions && process.versions['electron']){
     (function() {  // for electron
@@ -51,7 +54,7 @@ console.warn = (message: string|Object) => {
     }
 };
 
-export function initRender(initScreenKeys:string[]){
+export function useScreenModule(screenPackages:ScreenPackage[], screenKeyList?:string[]){
     if (process.versions && process.versions['electron']){  // for electron
         if (process.platform == 'win32' && process.env.NODE_ENV == 'production'){
           window.history.replaceState(null, '', 'file:///')
@@ -61,5 +64,9 @@ export function initRender(initScreenKeys:string[]){
           window.history.replaceState(null, '', _href || '/')
         }
     }
-    screenKeys.set(initScreenKeys)
+    screenPackages.forEach(screens=>{
+        pushNavigators(screens)
+        pushPathConfig(screens)
+    })
+    initScreenModule(screenPackages, screenKeyList)
 }

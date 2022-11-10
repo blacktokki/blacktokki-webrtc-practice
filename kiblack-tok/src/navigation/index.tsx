@@ -11,7 +11,7 @@ import * as React from 'react';
 import { ColorSchemeName } from 'react-native';
 
 import { RootStackParamList, ScreenPackage } from '../types';
-import DrawerNavigator, {pushNavigators, screenKeys} from './DrawerNavigator';
+import DrawerNavigator from './DrawerNavigator';
 import LinkingConfiguration from './LinkingConfiguration';
 import Config from './Config'
 
@@ -23,20 +23,13 @@ export function navigate(name:string, params?:any) {
   navigationRef.current?.navigate(name);
 }
 
-export function initScreenModule(screenPackages:ScreenPackage[], screenKeyList?:string[]){
-  screenPackages.forEach(screens=>{
-    pushNavigators(screens)
-    pushPathConfig(screens)
-  })
-  screenKeyList && screenKeys.set(screenKeyList)
-}
-
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
+  LinkingConfiguration.config.screens.Root.path = Config.rootPath
   return (
     <NavigationContainer
       ref={navigationRef}
       documentTitle={{formatter: (options, route) => {return `${options?.headerTitle || route?.name} - My App`}}}
-      linking={LinkingConfiguration}
+      linking={(process.versions && process.versions['electron'])?undefined:LinkingConfiguration}
       theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <RootNavigator />
     </NavigationContainer>

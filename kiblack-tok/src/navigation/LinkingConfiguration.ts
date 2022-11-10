@@ -6,7 +6,6 @@
 
 import { PathConfigMap } from '@react-navigation/core';
 import * as Linking from 'expo-linking';
-import Config from './Config';
 import { ScreenPackage, StackPackage } from '../types'
 
 const screens:PathConfigMap = {} 
@@ -21,16 +20,15 @@ export function pushPathConfig(currentValue:ScreenPackage){
     return _previousValue
   }, screens)
 }
-const Root = {
-  path: Config.rootPath,
-  screens: screens
-}
 
 export default {
   prefixes: [Linking.makeUrl('/')],
   config: {
     screens: {
-      Root: Root,
+      Root: {
+        path: "",
+        screens: screens
+      },
       NotFound: '*',
     },
   },

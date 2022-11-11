@@ -1,8 +1,10 @@
 import { StackNavigationOptions } from "@react-navigation/stack"
 import { ComponentType } from "react"
+import { ResponsiveNavigatorProps } from "../types"
 
 const Constants:{
     initialRouteName?:string,
+    ResponsiveNavigator?:(props:ResponsiveNavigatorProps)=>JSX.Element
     notFoundScreen:{
         component: ComponentType<any>,
         title: string,

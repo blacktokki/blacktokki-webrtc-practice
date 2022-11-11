@@ -18,6 +18,16 @@ export const _default = {
             stacks: {defaultStack:TabOneScreen},
             title: 'Tab One Title',
             url: 'one'
+        },
+        TabTwoScreen:{
+            stacks: {defaultStack:TabOneScreen},
+            title: 'Tab Two Title',
+            url: 'two'
+        },
+        TabThreeScreen:{
+            stacks: {defaultStack:TabOneScreen},
+            title: 'Tab Three Title',
+            url: 'three'
         }
     }
 }

@@ -26,3 +26,6 @@ export type ScreenPackage = {
 }
 
 export const DrawerParamList:Record<string, Record<string, any> | undefined> = {}
+
+export type ResponsiveNavigatorItemProps = {label:string, isFocused:boolean, navigate:()=>void}
+export type ResponsiveNavigatorProps = {data:ResponsiveNavigatorItemProps[], children:React.ReactNode}

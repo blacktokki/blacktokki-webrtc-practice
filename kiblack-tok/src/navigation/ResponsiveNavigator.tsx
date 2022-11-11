@@ -2,20 +2,16 @@
 
 import { useNavigation, useNavigationState } from '@react-navigation/core';
 import { useTheme } from '@react-navigation/native';
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
-import useResizeWindow from '../hooks/useResizeWindow';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ResponsiveNavigatorItemProps, ResponsiveNavigatorProps } from '../types';
 import { NavigatorSections } from './SectionDrawerContent'
 export const NavigatorsTitle:Record<string, string> = {}
-const tabBarHeight = 50
+export const tabBarHeight = 50
 
-export const TabBarNavigation = ({data, children}:ResponsiveNavigatorProps)=>{
+export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
   const { colors } = useTheme();
-  const childrenMemo = useMemo(()=>children, [])
-  return <>
-    {childrenMemo}
-    <View
+  return <View
       style={[
         styles.tabBar,
         {
@@ -47,18 +43,15 @@ export const TabBarNavigation = ({data, children}:ResponsiveNavigatorProps)=>{
       })}
       </View>
     </View>
-  </>
 }
 
 type ResponsiveNavigatorContainerProps = {
   keys:string[],
+  windowType?:'portrait' | 'landscape'
   ResponsiveNavigator?:(props:ResponsiveNavigatorProps)=>JSX.Element
-  children:React.ReactNode
 }
 
-export default ({ keys, children, ResponsiveNavigator }:ResponsiveNavigatorContainerProps)=> {
-    const window = useWindowDimensions()
-    const windowType = useMemo(()=>window.height >= window.width?'portrait':'landscape', [window])
+export default ({ keys, ResponsiveNavigator, windowType }:ResponsiveNavigatorContainerProps)=> {
     const navigation = useNavigation()
     const state = useNavigationState(state=>state.routes[0].state)
     const currentScreen = state?.routes[state.index|| 0].name;
@@ -67,9 +60,9 @@ export default ({ keys, children, ResponsiveNavigator }:ResponsiveNavigatorConta
       isFocused: currentScreen == screen,
       navigate: () => navigation.navigate("Root", {screen})
     }))))
-    return windowType== "portrait" && ResponsiveNavigator?<ResponsiveNavigator data={data}>
-      {children}
-    </ResponsiveNavigator>:<>{children}</>
+    return windowType== "portrait" && ResponsiveNavigator?
+      <View style={{position:'absolute', top:'100%', width:'100%', height:0, justifyContent:'flex-end'}}><ResponsiveNavigator data={data}/></View>:
+      <></>
 }
 
 const styles = StyleSheet.create({

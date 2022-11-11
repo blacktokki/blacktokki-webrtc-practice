@@ -16,7 +16,7 @@ import useResizeWindow from '../hooks/useResizeWindow';
 import { DrawerParamList, ScreenPackage, StackPackage } from '../types'
 import Config from './Config'
 import SectionDrawerContent, {NavigatorSections} from './SectionDrawerContent';
-import ResponsiveNavigator, {NavigatorsTitle, TabBarNavigation} from './ResponsiveNavigator';
+import ResponsiveNavigator, {NavigatorsTitle, tabBarHeight, TabBarNavigation} from './ResponsiveNavigator';
 
 const drawerWidth = 240
 const Drawer = createDrawerNavigator<typeof DrawerParamList>();
@@ -45,13 +45,11 @@ const defaultScreenKeys = {
 export const screenKeys = Object.assign({}, defaultScreenKeys)
 
 export default function DrawerNavigator() {
-  // const windowType = Config.ResponsiveNavigator?useResizeWindow():undefined
-  console.log('@@@')
+  const windowType = Config.ResponsiveNavigator?useResizeWindow():undefined
   const drawerType = Config.ResponsiveNavigator?'permanent':undefined
-  const drawerStyle = undefined//Config.ResponsiveNavigator?{maxWidth:windowType=='portrait'?0:drawerWidth}:undefined
+  const drawerStyle = Config.ResponsiveNavigator?{maxWidth:windowType=='portrait'?0:drawerWidth}:undefined
   const [keys, setKeys] = React.useState(screenKeys.get());
   const colorScheme = useColorScheme();
-
   React.useEffect(()=>{
     screenKeys.get = () => {return keys}
     screenKeys.set = (keys, screen)=> {setKeys(keys);Config.initialRouteName = screen}
@@ -60,19 +58,17 @@ export default function DrawerNavigator() {
 
   return (
     <>
-      
-    <ResponsiveNavigator keys={keys} ResponsiveNavigator={Config.ResponsiveNavigator}>
-    <Drawer.Navigator
-        initialRouteName={Config.initialRouteName as keyof typeof DrawerParamList}
-        screenOptions={{unmountOnBlur:true}}
-        drawerContent={SectionDrawerContent}
-        drawerContentOptions={{activeTintColor: Colors[colorScheme].tint}}
-        drawerType={drawerType}
-        drawerStyle={drawerStyle}
-      >
-        { keys.map((value)=>Navigators[value]) }
-      </Drawer.Navigator>
-    </ResponsiveNavigator>
+      <Drawer.Navigator
+          initialRouteName={Config.initialRouteName as keyof typeof DrawerParamList}
+          screenOptions={{unmountOnBlur:true}}
+          drawerContent={SectionDrawerContent}
+          drawerContentOptions={{activeTintColor: Colors[colorScheme].tint}}
+          drawerType={drawerType}
+          drawerStyle={drawerStyle}
+        >
+          { keys.map((value)=>Navigators[value]) }
+        </Drawer.Navigator>
+        <ResponsiveNavigator keys={keys} ResponsiveNavigator={Config.ResponsiveNavigator} windowType={windowType}/>
     </>
   );
 }
@@ -106,6 +102,7 @@ function StackNavigatorGeneric<RouteName extends keyof typeof DrawerParamList>(n
   const ParamList:Record<string, object | undefined> = {}
   const TabStack = createStackNavigator<typeof ParamList>();
   function TabNavigator({navigation}: DrawerScreenProps<typeof DrawerParamList, RouteName>) {
+    const windowType = Config.ResponsiveNavigator?useResizeWindow():undefined
     if(!useDrawer || Config.ResponsiveNavigator)
       navigation.closeDrawer()
     return (
@@ -120,7 +117,7 @@ function StackNavigatorGeneric<RouteName extends keyof typeof DrawerParamList>(n
           component={stack.component || stack}
           options={(option)=>({
             headerTitle: stack.title || title,
-            cardStyle: {overflow:'visible'},
+            cardStyle: {overflow:'visible', marginBottom:windowType=='portrait'?tabBarHeight:undefined},
             headerLeft: (props) => (
                 useDrawer && Config.ResponsiveNavigator == undefined?<TouchableOpacity 
                   onPress={() => navigation.openDrawer()} 

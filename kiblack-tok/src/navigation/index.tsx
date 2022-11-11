@@ -4,13 +4,12 @@
  *
  */
 
-import { pushPathConfig } from './LinkingConfiguration'
 import { NavigationContainer, DefaultTheme, DarkTheme, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
 import { ColorSchemeName } from 'react-native';
 
-import { RootStackParamList, ScreenPackage } from '../types';
+import { RootStackParamList } from '../types';
 import DrawerNavigator from './DrawerNavigator';
 import LinkingConfiguration from './LinkingConfiguration';
 import Config from './Config'

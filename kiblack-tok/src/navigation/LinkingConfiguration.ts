@@ -6,13 +6,13 @@
 
 import { LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import { drawerPathConfig } from './DrawerNavigator';
+import { bottomTabPathConfig } from './BottomTabNavigator';
 
 export default  {
   prefixes: [Linking.makeUrl('/')],
   config: {
     screens: {
-      Drawer: drawerPathConfig,
+      BottomTab: bottomTabPathConfig,
       NotFound: '*',
     },
   },

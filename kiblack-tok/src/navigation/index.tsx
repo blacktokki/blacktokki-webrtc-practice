@@ -10,7 +10,7 @@ import * as React from 'react';
 import { ColorSchemeName } from 'react-native';
 
 import { RootStackParamList } from '../types';
-import DrawerNavigator from './DrawerNavigator';
+import BottomTabNavigator from './BottomTabNavigator';
 import LinkingConfiguration from './LinkingConfiguration';
 import NotFoundScreen from '../screens/NotFoundScreen';
 
@@ -44,7 +44,7 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
 function RootNavigator() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Drawer" component={DrawerNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="BottomTab" component={BottomTabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
     </Stack.Navigator>
   );

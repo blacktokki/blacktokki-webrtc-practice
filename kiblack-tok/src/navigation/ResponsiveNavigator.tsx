@@ -1,14 +1,16 @@
 
 
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useNavigationState } from '@react-navigation/core';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import drawer from '../screens/drawer';
+import DummyView from '../components/DummyView';
+import bottomTab from '../screens/bottom-tab';
 import { ResponsiveNavigatorItemProps, ResponsiveNavigatorProps } from '../types';
-export const tabBarHeight = 50
+export const tabBarWidth = 240
 
-export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
+export const DrawerNavigator = ({data}:ResponsiveNavigatorProps)=>{
   const { colors } = useTheme();
   return <View
       style={[
@@ -16,7 +18,6 @@ export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
         {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
-          height: tabBarHeight,
           // paddingBottom,
           // paddingHorizontal: Math.max(insets.left, insets.right),
         },
@@ -24,6 +25,7 @@ export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
       ]}
       pointerEvents={false ? 'none' : 'auto'}
     >
+      <DummyView style={{width:'100%', height:135}} text='profile'/>
       <View accessibilityRole="tablist" style={styles.content}>
         {data.map((d, index)=>{
           return (
@@ -34,6 +36,7 @@ export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
               onPress={d.navigate}
               style={styles.tab}
           >
+              <FontAwesome size={30} style={{ marginBottom: -3 }} name='code'/>
               <Text style={[styles.label, { color: d.isFocused ? colors.primary : '#222' }]}>
               {d.label}
               </Text>
@@ -50,24 +53,21 @@ type ResponsiveNavigatorContainerProps = {
 
 export default ({ ResponsiveNavigator}:ResponsiveNavigatorContainerProps)=> {
     const navigation = useNavigation()
-    const state = useNavigationState(state=>state)
+    const state = useNavigationState(state=>state.routes[0].state)
     const currentScreen = state?.routes[state.index|| 0].name;
-    const data:ResponsiveNavigatorItemProps[] = Object.entries(drawer).map(([key, value])=>({
-      label:value.screens.defaultStack.title,
+    const data:ResponsiveNavigatorItemProps[] = Object.entries(bottomTab).map(([key, value])=>({
+      label:value.title,
       isFocused: currentScreen == key,
-      navigate: () => navigation.navigate("Drawer", {screen:key})
+      navigate: () => navigation.navigate(key)
     }))
     return ResponsiveNavigator?
-      <View style={{}}><ResponsiveNavigator data={data}/></View>:
+      <ResponsiveNavigator data={data}/>:
       <></>
 }
 
 const styles = StyleSheet.create({
     tabBar: {
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderTopWidth: StyleSheet.hairlineWidth,
+      width:240,
       elevation: 8,
     },
     content: {

@@ -4,7 +4,7 @@
  */
 
 export type RootStackParamList = {
-  Drawer: undefined;
+  BottomTab: undefined;
   NotFound: undefined;
 };
 

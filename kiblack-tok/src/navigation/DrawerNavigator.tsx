@@ -7,7 +7,7 @@ import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { DrawerScreenProps, createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-import { Text, ScrollView } from 'react-native';
+import { Text, ScrollView, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
 import Colors from '../constants/Colors';
@@ -83,8 +83,11 @@ function DrawerNavigatorGeneric(name:string, title:string, useDrawer:boolean, pa
       component={StackNavigatorGeneric(name, title, useDrawer, params, stacks)}
       options={{
         title:title,
-        // drawerLabel: (props)=><></>,
-        drawerIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+        drawerLabel: (props)=><View style={{left:16}}>
+          <TabBarIcon name="ios-code" color={props.color}/>
+          <Text style={{textAlign: 'center'}}>{title}</Text>
+        </View>,
+        // drawerIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
       }}
     />
   )

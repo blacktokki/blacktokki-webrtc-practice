@@ -1,143 +1,98 @@
-/**
- * Learn more about createDrawerNavigator:
- * https://reactnavigation.org/docs/bottom-tab-navigator
- */
 
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import { DrawerScreenProps, createDrawerNavigator } from '@react-navigation/drawer';
+import { FontAwesome } from '@expo/vector-icons';
+import { createDrawerNavigator, DrawerScreenProps } from '@react-navigation/drawer';
+import { PathConfig, PathConfigMap, StackActions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-import { Text, ScrollView, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Text, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import useResizeWindow from '../hooks/useResizeWindow';
-import { DrawerParamList, ScreenPackage, StackPackage } from '../types'
-import Config from './Config'
-import SectionDrawerContent, {NavigatorSections} from './SectionDrawerContent';
-import ResponsiveNavigator, {NavigatorsTitle, tabBarHeight, TabBarNavigation} from './ResponsiveNavigator';
+import drawer from '../screens/drawer';
+import ResponsiveNavigator, { tabBarHeight, TabBarNavigation } from './ResponsiveNavigator';
+import SectionDrawerContent from './DrawerContent';
 
-const drawerWidth = 240
-const Drawer = createDrawerNavigator<typeof DrawerParamList>();
-const Navigators:Record<string, JSX.Element[]> = {}
+const drawerWidth = 240;
+const Drawer = createDrawerNavigator();
 
-export function pushNavigators(currentValue:ScreenPackage){
-  const keys = Object.keys(currentValue.screens)
-  NavigatorSections[currentValue.key] = keys
-  Navigators[currentValue.key] = keys.map((value)=>{
-    NavigatorsTitle[value] = currentValue.screens[value].title
-    return DrawerNavigatorGeneric(
-      value, 
-      currentValue.screens[value].title, 
-      currentValue.screens[value].useDrawer != false,
-      currentValue.screens[value].params || {},
-      currentValue.screens[value].stacks
-    )})
-}
 
-let initScreenKeys:string[]|undefined
-const defaultScreenKeys = {
-  set: (keys:string[], screen?:string)=>{initScreenKeys = keys;Config.initialRouteName = screen},
-  get: ()=>{return initScreenKeys || [Object.keys(Navigators)[0]]}
-}
-
-export const screenKeys = Object.assign({}, defaultScreenKeys)
+export const drawerPathConfig = {
+    screens:drawer
+} as PathConfigMap
 
 export default function DrawerNavigator() {
-  const windowType = Config.ResponsiveNavigator?useResizeWindow():undefined
-  const drawerType = Config.ResponsiveNavigator?'permanent':undefined
-  const drawerStyle = Config.ResponsiveNavigator?{maxWidth:windowType=='portrait'?0:drawerWidth}:undefined
-  const [keys, setKeys] = React.useState(screenKeys.get());
-  const colorScheme = useColorScheme();
-  React.useEffect(()=>{
-    screenKeys.get = () => {return keys}
-    screenKeys.set = (keys, screen)=> {setKeys(keys);Config.initialRouteName = screen}
-    return ()=>{Object.assign({}, defaultScreenKeys)}
-  }, [keys])
-
-  return (
-    <>
-      <Drawer.Navigator
-          initialRouteName={Config.initialRouteName as keyof typeof DrawerParamList}
-          screenOptions={{unmountOnBlur:true}}
-          drawerContent={SectionDrawerContent}
-          drawerContentOptions={{activeTintColor: Colors[colorScheme].tint}}
-          drawerType={drawerType}
-          drawerStyle={drawerStyle}
-        >
-          { keys.map((value)=>Navigators[value]) }
-        </Drawer.Navigator>
-        <ResponsiveNavigator keys={keys} ResponsiveNavigator={Config.ResponsiveNavigator} windowType={windowType}/>
-    </>
-  );
-}
-
-function DrawerNavigatorGeneric(name:string, title:string, useDrawer:boolean, params:Record<string, any>, stacks:Record<string, StackPackage | React.ComponentType<any>>){
-  //const drawerName = name.substring(0, name.lastIndexOf("Screen"))
-  DrawerParamList[name] = params
-  return (
-    <Drawer.Screen
-      key={name}
-      name={name}
-      component={StackNavigatorGeneric(name, title, useDrawer, params, stacks)}
-      options={{
-        title:title,
-        drawerLabel: (props)=><View style={{left:16}}>
-          <TabBarIcon name="ios-code" color={props.color}/>
-          <Text style={{textAlign: 'center'}}>{title}</Text>
-        </View>,
-        // drawerIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
-      }}
-    />
-  )
-}
-
-// You can explore the built-in icon families and icons on the web at:
-// https://icons.expo.fyi/
-function TabBarIcon(props: { name: React.ComponentProps<typeof Ionicons>['name']; color: string }) {
-  return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
-}
-
-// Each tab has its own navigation stack, you can read more about this pattern here:
-// https://reactnavigation.org/docs/tab-based-navigation#a-stack-navigator-for-each-tab
-function StackNavigatorGeneric<RouteName extends keyof typeof DrawerParamList>(name:string, title:string, useDrawer:boolean, params:Record<string, any>, stacks:Record<string, StackPackage | React.ComponentType<any>>){
-  const ParamList:Record<string, object | undefined> = {}
-  const TabStack = createStackNavigator<typeof ParamList>();
-  function TabNavigator({navigation}: DrawerScreenProps<typeof DrawerParamList, RouteName>) {
-    const windowType = Config.ResponsiveNavigator?useResizeWindow():undefined
-    if(!useDrawer || Config.ResponsiveNavigator)
-      navigation.closeDrawer()
+    const colorScheme = useColorScheme();
+    const windowType = useResizeWindow();
+    const footer = React.useMemo(()=><ResponsiveNavigator ResponsiveNavigator={TabBarNavigation}/>, [])
+    const stacks = React.useMemo(()=>stackNavigatorComponents(footer),[footer])
     return (
-      <ScrollView contentContainerStyle={{flex:1}}>
-      <TabStack.Navigator>
-        {Object.keys(stacks).map((value, index)=>{
-          const stack = stacks[value] as StackPackage
-          ParamList[value || name] = stack.params || params
-          return <TabStack.Screen
-          key={index}
-          name={value || name}
-          component={stack.component || stack}
-          options={(option)=>({
-            headerTitle: stack.title || title,
-            cardStyle: {overflow:'visible', marginBottom:windowType=='portrait'?tabBarHeight:undefined},
-            headerLeft: (props) => (
-                useDrawer && Config.ResponsiveNavigator == undefined?<TouchableOpacity 
-                  onPress={() => navigation.openDrawer()} 
-                  style={{marginLeft:20, borderRadius:6, borderColor:'rgba(27,31,36,0.15)', borderWidth:1, paddingVertical:5, paddingHorizontal:6.5, width:32}}>
-                    <FontAwesome size={20} name='bars' color='black' />
-                    {/* <Text style={{color:'black', textAlign:'center', fontSize:14, fontWeight:'400'}}>메뉴</Text> */}
-                  </TouchableOpacity>:undefined
-            ),
-            ...Config.screenOptions,
-          })}
-        />
-        })}
-      </TabStack.Navigator>
-      </ScrollView>
+        <>
+            <Drawer.Navigator
+                // initialRouteName=""
+                screenOptions={{unmountOnBlur:true}}
+                drawerContent={SectionDrawerContent}
+                drawerContentOptions={{activeTintColor: Colors[colorScheme].tint}}
+                drawerType={'permanent'}
+                drawerStyle={{maxWidth:windowType=='portrait'?0:drawerWidth}}
+            >
+                {Object.entries(drawer).map((([key, screen])=>{
+                    return <Drawer.Screen
+                        key={key}
+                        name={key}
+                        component={stacks[key]}
+                        options={{
+                            drawerLabel: (props)=><View style={{left:16}}>
+                            <TabBarIcon name="code" color={props.color}/>
+                            <Text style={{textAlign: 'center'}}>{screen.screens.defaultStack.title}</Text>
+                            </View>,
+                            // drawerIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+                        }}
+                    />
+                }))}
+            </Drawer.Navigator>
+        </>
     );
-  }
-  return TabNavigator
 }
 
-Config.ResponsiveNavigator = TabBarNavigation
+
+function stackNavigatorComponents(footer:JSX.Element){
+    return Object.entries(drawer).reduce((record, [key, screen])=>{
+        const TabStack = createStackNavigator();
+        function TabNavigator({}: DrawerScreenProps<any, any>) {
+            const windowType = useResizeWindow()
+            return (
+              <View style={{flex:1}}>
+                <ScrollView contentContainerStyle={{flex:1}}>
+                <TabStack.Navigator>
+                    {Object.entries(screen.screens).map(([key2, stack], index)=>{
+                    return <TabStack.Screen
+                        key={key2}
+                        name={key2}
+                        component={stack.component || stack}
+                        options={(option)=>({
+                            headerTitle: stack.title,
+                            cardStyle: {overflow:'visible'},
+                        })}
+                        />
+                    })}
+                    </TabStack.Navigator>
+                    </ScrollView>
+                    {windowType=='portrait'?footer:undefined}
+                </View>
+          );}
+        record[key] = TabNavigator
+        return record
+    }, {} as Record<string, React.ComponentType<any>>)
+}
+
+/**
+ * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+ */
+function TabBarIcon(props: {
+    name: React.ComponentProps<typeof FontAwesome>['name'];
+    color: string;
+}) {
+    return <FontAwesome size={30} style={{ marginBottom: -3 }} {...props} />;
+}

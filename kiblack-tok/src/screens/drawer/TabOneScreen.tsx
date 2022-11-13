@@ -1,13 +1,14 @@
 import React, {useCallback, useRef} from 'react';
 import { StackScreenProps } from '@react-navigation/stack';
-import { DrawerParamList } from '../types';
-import { StyleSheet, Text, Button} from 'react-native';
+import { StyleSheet, Text, Button, View} from 'react-native';
 
 
 export default function TabOneScreen({
   navigation
-}: StackScreenProps<typeof DrawerParamList, 'TabOne'>) {
-  return <></>
+}: StackScreenProps<any, 'TabOne'>) {
+  return <View style={{padding:10}}>
+    
+  </View>
 }
 
 const styles = StyleSheet.create({

@@ -4,28 +4,9 @@
  */
 
 export type RootStackParamList = {
-  Root: undefined;
+  Drawer: undefined;
   NotFound: undefined;
 };
-export type StackPackage = {
-  title?: string,
-  component: React.ComponentType<any>,
-  url?: string| Record<string, any>,
-  params?: Record<string, any>,
-}
-
-export type ScreenPackage = {
-  key:string,
-  screens:Record<string, {
-    url:string,
-    title: string,
-    params?: Record<string, any>
-    useDrawer?: boolean,
-    stacks:Record<string, StackPackage | React.ComponentType<any>>
-  }>
-}
-
-export const DrawerParamList:Record<string, Record<string, any> | undefined> = {}
 
 export type ResponsiveNavigatorItemProps = {label:string, isFocused:boolean, navigate:()=>void}
 export type ResponsiveNavigatorProps = {data:ResponsiveNavigatorItemProps[]}

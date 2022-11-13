@@ -4,9 +4,8 @@ import { useNavigation, useNavigationState } from '@react-navigation/core';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import drawer from '../screens/drawer';
 import { ResponsiveNavigatorItemProps, ResponsiveNavigatorProps } from '../types';
-import { NavigatorSections } from './SectionDrawerContent'
-export const NavigatorsTitle:Record<string, string> = {}
 export const tabBarHeight = 50
 
 export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
@@ -46,22 +45,20 @@ export const TabBarNavigation = ({data}:ResponsiveNavigatorProps)=>{
 }
 
 type ResponsiveNavigatorContainerProps = {
-  keys:string[],
-  windowType?:'portrait' | 'landscape'
   ResponsiveNavigator?:(props:ResponsiveNavigatorProps)=>JSX.Element
 }
 
-export default ({ keys, ResponsiveNavigator, windowType }:ResponsiveNavigatorContainerProps)=> {
+export default ({ ResponsiveNavigator}:ResponsiveNavigatorContainerProps)=> {
     const navigation = useNavigation()
-    const state = useNavigationState(state=>state.routes[0].state)
+    const state = useNavigationState(state=>state)
     const currentScreen = state?.routes[state.index|| 0].name;
-    const data = ([] as ResponsiveNavigatorItemProps[]).concat(...keys.map(screenKey=>NavigatorSections[screenKey].map(screen=>({
-      label:NavigatorsTitle[screen],
-      isFocused: currentScreen == screen,
-      navigate: () => navigation.navigate("Root", {screen})
-    }))))
-    return windowType== "portrait" && ResponsiveNavigator?
-      <View style={{position:'absolute', top:'100%', width:'100%', height:0, justifyContent:'flex-end'}}><ResponsiveNavigator data={data}/></View>:
+    const data:ResponsiveNavigatorItemProps[] = Object.entries(drawer).map(([key, value])=>({
+      label:value.screens.defaultStack.title,
+      isFocused: currentScreen == key,
+      navigate: () => navigation.navigate("Drawer", {screen:key})
+    }))
+    return ResponsiveNavigator?
+      <View style={{}}><ResponsiveNavigator data={data}/></View>:
       <></>
 }
 

@@ -5,7 +5,7 @@ import CommonSection from '../../components/CommonSection';
 import CommonItem from '../../components/CommonItem';
 
 
-export default function MemberScreen({navigation}: StackScreenProps<any, 'Member'>) {
+export default function TabTwoScreen({navigation}: StackScreenProps<any, 'TabOne'>) {
   return <View style={{padding:10}}>
     <CommonSection>
       <CommonItem/>

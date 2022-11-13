@@ -1,12 +1,15 @@
 import { PathConfig } from "@react-navigation/native";
-import MemberScreen from "./MemberScreen";
+import HomeScreen from "./HomeScreen";
 import TabOneScreen from "./TabOneScreen";
 
 export default {
-    MemberScreen:{
-        title:'member',
-        component:MemberScreen,
-        path:'member'
+    HomeScreen:{
+        title:'home',
+        component:HomeScreen,
+        path:'home',
+        options:{
+            headerShown:false
+        }
     },
     TabOneScreen:{
         title:'tab one',
@@ -18,4 +21,4 @@ export default {
         component:TabOneScreen,
         path:'two'
     },
-} as Record<string, PathConfig & {title:string, component:React.ComponentType<any>}>
+} as Record<string, PathConfig & {title:string, component:React.ComponentType<any>, options?:any}>

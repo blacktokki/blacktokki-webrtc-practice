@@ -8,9 +8,10 @@ import useResizeWindow from '../../hooks/useResizeWindow';
 import { bottomTabs } from '../../tabs';
 
 
-export default function HomeScreen({navigation}: StackScreenProps<any, 'Home'>) {
+export default function HomeScreen({navigation, route}: StackScreenProps<any, 'Home'>) {
   const windowType = useResizeWindow();
   return windowType == 'landscape'?
-    <View style={{padding:10}}></View>:<TabViewNavigator tabs={bottomTabs} tabBarPosition="bottom"/>
+    <View style={{padding:10}}></View>:
+    <TabViewNavigator tabs={bottomTabs} tabBarPosition="bottom" index={parseInt(route.params?.['tab'] || 0)} onTab={(index)=>{navigation.setParams({tab:index})}}/>
 }
 

@@ -1,6 +1,8 @@
 import React from "react";
 import MemberTab from "./MemberTab";
 import OneTab from "./OneTab";
+import DrawerTab from './DrawerTab';
+import ChatTab from "./ChatTab";
 
 export const bottomTabs = {
     OneTab:{
@@ -8,8 +10,8 @@ export const bottomTabs = {
         component:MemberTab,
     },
     TwoTab:{
-        title:'room',
-        component:OneTab,
+        title:'chat',
+        component:ChatTab,
     },
     ThreeTab:{
         title:'channel',
@@ -23,14 +25,14 @@ export const bottomTabs = {
 export const drawerTabs = {
     OneTab:{
         title:'member',
-        component:OneTab,
+        component:DrawerTab.Member,
     },
     TwoTab:{
-        title:'room',
-        component:OneTab,
+        title:'chat',
+        component:DrawerTab.Chat,
     },
     ThreeTab:{
         title:'channel',
-        component:OneTab
+        component:DrawerTab.Channel
     }
 } as Record<string, {title:string, component:React.ComponentType<any>}>

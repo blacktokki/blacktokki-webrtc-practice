@@ -17,7 +17,8 @@
     "desktop:mac": "electron-webpack && electron-builder --dir -c.compression=store -c.mac.identity=null",
     "desktop:windows": ".\\node_modules\\.bin\\electron-webpack.cmd && electron-builder --dir -c.compression=store",
     "mac": "electron-webpack && electron-builder --mac -c.compression=store",
-    "windows": ".\\node_modules\\.bin\\electron-webpack.cmd && electron-builder --win -c.compression=store"
+    "windows": ".\\node_modules\\.bin\\electron-webpack.cmd && electron-builder --win -c.compression=store",
+    "portforward": "portforward 9000 9000"
   },
   "jest": {
     "preset": "jest-expo"
@@ -27,6 +28,7 @@
     "@react-native-community/masked-view": "0.1.10",
     "@react-navigation/native": "~5.8.10",
     "@react-navigation/stack": "~5.12.8",
+    "axios": "^1.1.3",
     "expo": "~41.0.1",
     "expo-asset": "~8.3.1",
     "expo-constants": "~10.1.3",
@@ -60,6 +62,7 @@
     "gh-pages": "^3.2.2",
     "jest-expo": "~41.0.0",
     "npm-link-shared": "^0.5.6",
+    "portforward": "^1.0.1",
     "typescript": "~4.0.0"
   },
   "build": {

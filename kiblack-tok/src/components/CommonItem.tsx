@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { View, Text } from './Themed';
-import { StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View } from './Themed';
+import { StyleSheet, StyleProp, ViewStyle, TextStyle, Pressable } from 'react-native';
 
 export type ItemParamList = {
     outerContainerStyle?:StyleProp<TextStyle>
@@ -11,14 +11,23 @@ export type ItemParamList = {
 }
 
 export default function CommonItem(props:ItemParamList){
+  const [hover, setHover] = React.useState(false)
+  const [press, setPress] = React.useState(false)
   return (
-    <View style={[styles.outerContainer, props.outerContainerStyle]}>
-        <View style={[styles.container, props.containerStyle]}>
+    <Pressable
+      style={[styles.outerContainer ,props.outerContainerStyle, (press)?{backgroundColor:'rgb(242,242,242)'}:{}]}
+      onPressIn={()=>{setPress(true)}}
+      onPressOut={()=>{setPress(false);props.onPress?.()}}
+       //@ts-ignore
+       onHoverIn={()=>setHover(true)}
+       onHoverOut={()=>setHover(false)}
+    >
+        <View style={[styles.container ,props.containerStyle]}>
             <View style={[styles.bodyView, props.bodyStyle]}>
-              {props.children}
+                <>{props.children}</>
             </View>
-          </View>
-        </View>
+      </View>
+    </Pressable>
     )
 }
 
@@ -27,11 +36,10 @@ const styles = StyleSheet.create({
     width:'100%',
     maxWidth:1080,
     alignItems:'stretch',
-    backgroundColor:'rgba(0,0,0,0)'
   },  
   container: {
       marginHorizontal:20,
-      backgroundColor:'rgba(0,0,0,0)',
+      backgroundColor:'rgba(0,0,0,0)'
     },
     bodyView:{
       width: '100%',
@@ -41,6 +49,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       borderBottomWidth:1,
       borderColor:'#d0d7de',
+      backgroundColor:'rgba(0,0,0,0)'
     }
   });
   

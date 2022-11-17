@@ -6,14 +6,19 @@
 
 import { LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import root from '../screens/root';
+import {main, login} from '../screens/main';
 
 export default  {
   prefixes: [Linking.makeUrl('/')],
   config: {
     screens: {
-      ...root,
-      NotFound: '*',
+      Main: {
+        screens:{
+          ...main,
+          ...login,
+          NotFound: '*',
+        }
+      }
     },
   },
 } as LinkingOptions;

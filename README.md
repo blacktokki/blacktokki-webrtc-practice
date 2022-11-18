@@ -1,1 +1,1 @@
-# blacktokki-messenger
+# blacktokki-messenger-frontend

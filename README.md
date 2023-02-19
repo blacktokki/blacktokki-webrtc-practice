@@ -1,1 +1,1 @@
-# blacktokki-messenger-frontend
+# blacktokki-webrtc-practice

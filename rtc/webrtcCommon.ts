@@ -17,10 +17,10 @@ export const sessionConstraints = {
 	}
 };
 
-export const onICEcandidate = (pc:any, name:string, data:any, ignoreRemoteDesc:boolean)=>{
-	if(name == data.sender){
-	const message = data.rtcMessage
-		const candidate = new RTCIceCandidate(message);
+export const onICEcandidate = (pc:any, user:{id?:number}|undefined, message:any, ignoreRemoteDesc:boolean)=>{
+	if(user && user.id == message.sender){
+	const _message = message.data.rtcMessage
+		const candidate = new RTCIceCandidate(_message);
 		if (pc) {
 			console.log("ICE candidate Added");
 			(ignoreRemoteDesc || pc.remoteDescription) && pc.addIceCandidate(candidate);
@@ -28,13 +28,13 @@ export const onICEcandidate = (pc:any, name:string, data:any, ignoreRemoteDesc:b
 	}
 }
 
-export const sendICEcandidate = (event, websocket, caller) => {
+export const sendICEcandidate = (event, sendMessage, userId) => {
 	// When you find a null candidate then there are no more candidates.
 	// Gathering of candidates has finished.
 	if ( !event.candidate ) { return; };
 	// Send the event.candidate onto the person you're calling.
 	// Keeping to Trickle ICE Standards, you should send the candidates immediately.
-	websocket.send(JSON.stringify({type:'ICEcandidate', data:{user:caller, rtcMessage:event.candidate}}))
+	sendMessage({type:'ICEcandidate', user:userId, data:{rtcMessage:event.candidate}})
   }
 
 export const camStyle = StyleSheet.create({

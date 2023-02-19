@@ -3,8 +3,9 @@ import {Button, Platform, View, Text} from "react-native";
 import WebView from "react-native-webview";
 import { RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
 import { camStyle, onICEcandidate, peerConstraints, sessionConstraints } from "./webrtcCommon";
-import useWebsocket, { getName } from "./useWebsocket";
+import useWebsocketContext from "./useWebsocketContext";
 import { createOffer, websocketOnMessage } from "./LocalCam";
+import useAuthContext from "./useAuthContext";
 
 const useViatualCam = ()=>{
   const webViewRef = useRef()
@@ -69,12 +70,16 @@ export default ()=>{
   const [active, setActive] = useState(false)
   //localCam code
   const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string, myName?:string}>({})
-  const websocketRef = useWebsocket(response=>websocketOnMessage(response, pcRef, websocketRef))
+  const {user} = useAuthContext()
+  const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
+  useEffect(()=>{
+    lastJsonMessage && websocketOnMessage(lastJsonMessage, pcRef, user, sendJsonMessage)
+  
+  }, [lastJsonMessage])
   useEffect(()=>{
     pcRef.current.stream = stream
-    pcRef.current.myName = stream?getName():undefined
     if (pcRef.current.stream && pcRef.current.pc)
-      createOffer(pcRef.current, websocketRef)
+      createOffer(pcRef.current, sendJsonMessage)
   },[stream])
   const stop = ()=>{
     if(pcRef.current.stream){
@@ -111,7 +116,7 @@ export default ()=>{
       undefined}
       <View style={camStyle.bottonContainer}>
         <View style={camStyle.buttonBar}>
-          <Text style={{flex:1}}>{pcRef.current.myName}</Text>
+          <Text style={{flex:1}}>{user?.username}</Text>
         </View>
         <View style={camStyle.buttonBar}>
             <Button title="Start" onPress={()=>setActive(true)} />

@@ -1,42 +1,48 @@
-import React, { useState, useRef } from "react";
+import axios from "axios";
+import React, { useState, useRef, useEffect, } from "react";
 import {Button,Text, TextInput, View} from "react-native";
 import { RTCView, RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
-import useWebsocket from "./useWebsocket";
+import useWebsocketContext from "./useWebsocketContext";
 import { camStyle, onICEcandidate, peerConstraints, sendICEcandidate, sessionConstraints } from "./webrtcCommon";
 
-export default ()=>{
-  const pcRef = useRef<{pc?:RTCPeerConnection, name?:string}>({})
-  const [name, setName] = useState('')
-  const [stream, setStream] = useState<MediaStream>()
+const websocketOnMessage = async(response, pcRef, sendMessage, setStream)=>{
+  let type = response.type;
+  if (type == "call" && pcRef.current.user.username == response.data.username){
+    console.log('2 call')
+    const peerConnection = pcRef.current.pc
+    pcRef.current.user.id = response.sender
+    if (!peerConnection)
+      return
+    peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender));
+    const offerDescription = new RTCSessionDescription(response.data.rtcMessage);
+    await peerConnection.setRemoteDescription( offerDescription );
+    const answerDescription = await peerConnection.createAnswer( sessionConstraints );
+    await peerConnection.setLocalDescription( answerDescription );
+    sendMessage({type:'answer', user:pcRef.current.user?.id, data:{rtcMessage:peerConnection.localDescription}})
+    // Here is a good place to process candidates.
+    const streams = pcRef.current.pc.getRemoteStreams()
+    setStream(streams[streams.length - 1])
+  }
+  if (type == "ICEcandidate")
+    onICEcandidate(pcRef.current.pc, pcRef.current.user, response, true)
+}
 
-  const websocketRef = useWebsocket(async(response)=>{
-    let type = response.type;
-    if (type == "call_received" && pcRef.current.name == response.data.caller){
-      console.log('2 call_received')
-      const peerConnection = pcRef.current.pc
-      if (!peerConnection)
-        return
-      peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, websocketRef.current, response.data.caller));
-      const offerDescription = new RTCSessionDescription(response.data.rtcMessage);
-      await peerConnection.setRemoteDescription( offerDescription );
-      const answerDescription = await peerConnection.createAnswer( sessionConstraints );
-      await peerConnection.setLocalDescription( answerDescription );
-      websocketRef.current.send(JSON.stringify({type:'answer_call', data:{caller:response.data.caller, rtcMessage:peerConnection.localDescription}}))
-      // Here is a good place to process candidates.
-      const streams = pcRef.current.pc.getRemoteStreams()
-      setStream(streams[streams.length - 1])
-    }
-    if (type == "ICEcandidate")
-      onICEcandidate(pcRef.current.pc,pcRef.current.name, response.data, true)
-  })
+export default ()=>{
+  const pcRef = useRef<{pc?:RTCPeerConnection, user?:{username:string, id?:number}}>({})
+  const [username, setUsername] = useState('')
+  const [stream, setStream] = useState<MediaStream>()
+  const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
+  useEffect(()=>{
+    lastJsonMessage && websocketOnMessage(lastJsonMessage, pcRef, sendJsonMessage, setStream)
+  }, [lastJsonMessage])
   const start = ()=>{
     console.log("start");
     if (!pcRef.current.pc) {
       pcRef.current.pc = new RTCPeerConnection( peerConstraints );
+      pcRef.current.user = {username}
     }
     if (!stream){
-      pcRef.current.name = name
-      websocketRef.current.send(JSON.stringify({type:'ready_call', data:{user:name}}))
+      sendJsonMessage({type:'start', username, data:{}})
     }
   }
 
@@ -47,6 +53,7 @@ export default ()=>{
       setStream(undefined)
       pcRef.current.pc.close();
       pcRef.current.pc = undefined
+      pcRef.current.user = undefined
     }
   };
 
@@ -56,8 +63,11 @@ export default ()=>{
       <View style={camStyle.bottonContainer}>
         <View style={camStyle.buttonBar}>
           {stream?
-            <Text style={{borderWidth:1, flex:1}}>{name}</Text>:
-            <TextInput style={{borderWidth:1, flex:1}} value={name} onChangeText={setName}/>
+            <Text style={{borderWidth:1, flex:1}}>Username:{username}</Text>:
+            <>
+              <Text style={{borderWidth:1}}>Username:&nbsp;</Text>
+              <TextInput style={{borderWidth:1, flex:1}} value={username} onChangeText={setUsername}/>
+            </>
           }
         </View>
         <View style={camStyle.buttonBar}>

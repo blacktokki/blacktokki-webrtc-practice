@@ -1,4 +1,5 @@
-rnm
-frontend
 .DS_Store
 virt/public/models
+
+# other projects
+rnm

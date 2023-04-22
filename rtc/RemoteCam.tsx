@@ -13,7 +13,7 @@ const websocketOnMessage = async(response, pcRef, sendMessage, setStream)=>{
     pcRef.current.user.id = response.sender
     if (!peerConnection)
       return
-    peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender));
+    peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'local'));
     const offerDescription = new RTCSessionDescription(response.data.rtcMessage);
     await peerConnection.setRemoteDescription( offerDescription );
     const answerDescription = await peerConnection.createAnswer( sessionConstraints );
@@ -23,8 +23,8 @@ const websocketOnMessage = async(response, pcRef, sendMessage, setStream)=>{
     const streams = pcRef.current.pc.getRemoteStreams()
     setStream(streams[streams.length - 1])
   }
-  if (type == "ICEcandidate")
-    onICEcandidate(pcRef.current.pc, pcRef.current.user, response, true)
+  if (type == "ICEcandidate" && response.data.target=='remote' && pcRef.current.user.id == response.sender)
+    onICEcandidate(pcRef.current.pc, response)
 }
 
 export default ()=>{

@@ -36,7 +36,7 @@ const useViatualCam = ()=>{
       setStream(new MediaStream(streams[streams.length - 1]))
     }
     if (type == "ICEcandidate"){
-      onICEcandidate(pcRef.current.pc, undefined, data, true)
+      onICEcandidate(pcRef.current.pc, data)
     }
     if (type == "console"){
       console.log("(virtual)", data)

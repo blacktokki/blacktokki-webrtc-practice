@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import {Button, Platform, View, Text} from "react-native";
 import WebView from "react-native-webview";
-import { RTCPeerConnection, MediaStream, RTCSessionDescription } from "react-native-webrtc-web-shim";
-import { camStyle, onICEcandidate, peerConstraints, sessionConstraints } from "./webrtcCommon";
 import useWebsocketContext from "./useWebsocketContext";
-import { createOffer, websocketOnMessage } from "./LocalCam";
+import { MediaStream, useLocalCam, camStyle} from "./webrtcCommon";
+import {RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtcCommon/p2p"
 import useAuthContext from "./useAuthContext";
 
 const useViatualCam = ()=>{
@@ -36,7 +35,9 @@ const useViatualCam = ()=>{
       setStream(new MediaStream(streams[streams.length - 1]))
     }
     if (type == "ICEcandidate"){
-      onICEcandidate(pcRef.current.pc, data)
+      const candidate = new RTCIceCandidate(data.rtcMessage);
+        console.log("ICE candidate Added");
+        pcRef.current.pc.addIceCandidate(candidate);
     }
     if (type == "console"){
       console.log("(virtual)", data)
@@ -69,24 +70,18 @@ export default ()=>{
   const {webViewRef, stream, listener, virtualStop} = useViatualCam()
   const [active, setActive] = useState(false)
   //localCam code
-  const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, name?:string, myName?:string}>({})
   const {user} = useAuthContext()
   const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
+  const {start, stop, websocketOnMessage} = useLocalCam(sendJsonMessage, ()=>{})
   useEffect(()=>{
-    lastJsonMessage && websocketOnMessage(lastJsonMessage, pcRef, user, sendJsonMessage)
-  
+    lastJsonMessage && websocketOnMessage(lastJsonMessage, user)
   }, [lastJsonMessage])
   useEffect(()=>{
-    pcRef.current.stream = stream
-    if (pcRef.current.stream && pcRef.current.pc)
-      createOffer(pcRef.current, sendJsonMessage)
+    start(user, stream)
   },[stream])
-  const stop = ()=>{
-    if(pcRef.current.stream){
-      stream.getTracks().map(track => track.stop());
-      pcRef.current.stream = undefined
-      virtualStop()
-    }
+  const _stop = ()=>{
+    stop()
+    virtualStop()
     setActive(false)
   }
   //localCam code end
@@ -120,7 +115,7 @@ export default ()=>{
         </View>
         <View style={camStyle.buttonBar}>
             <Button title="Start" onPress={()=>setActive(true)} />
-            <Button title="Stop" onPress={stop} />
+            <Button title="Stop" onPress={_stop} />
           </View>
       </View>
     </View>

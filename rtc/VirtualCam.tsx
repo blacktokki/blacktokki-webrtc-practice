@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import {Button, Platform, View, Text} from "react-native";
 import WebView from "react-native-webview";
 import useWebsocketContext from "./useWebsocketContext";
-import { MediaStream, useLocalCam, camStyle} from "./webrtcCommon";
-import {RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtcCommon/p2p"
+import {useLocalCam, camStyle} from "./webrtcCommon";
+import {MediaStream, RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtcCommon/p2p"
 import useAuthContext from "./useAuthContext";
 
 const useViatualCam = ()=>{
@@ -72,7 +72,7 @@ export default ()=>{
   //localCam code
   const {user} = useAuthContext()
   const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
-  const {start, stop, websocketOnMessage} = useLocalCam(sendJsonMessage, ()=>{})
+  const {start, stop, websocketOnMessage} = useLocalCam(sendJsonMessage)
   useEffect(()=>{
     lastJsonMessage && websocketOnMessage(lastJsonMessage, user)
   }, [lastJsonMessage])

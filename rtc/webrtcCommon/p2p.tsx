@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { mediaDevices, RTCPeerConnection, MediaStream, RTCSessionDescription, RTCIceCandidate } from "react-native-webrtc-web-shim";
+import { useCallback, useRef, useState, useMemo } from "react";
+import { RTCView, mediaDevices, RTCPeerConnection, MediaStream, RTCSessionDescription, RTCIceCandidate } from "react-native-webrtc-web-shim";
 export const peerConstraints = {
 	iceServers: [
 		{
@@ -15,7 +15,7 @@ export const sessionConstraints = {
 		VoiceActivityDetection: true
 	}
 };
-export { RTCPeerConnection, RTCSessionDescription} from "react-native-webrtc-web-shim";
+export {MediaStream, RTCPeerConnection, RTCSessionDescription} from "react-native-webrtc-web-shim";
 
 const onICEcandidate = (pc:any, message:any)=>{
 	const _message = message.data.rtcMessage
@@ -42,8 +42,10 @@ const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:ty
   sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{username:user.username, rtcMessage:offerDescription}})
 }
 
-export const useLocalCam = (sendMessage:(data:any)=>void, setStream:(stream:typeof MediaStream)=>void)=>{
+export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 	const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, user?:{id:number}}>({})
+	const [_stream, setStream] = useState<MediaStream>()
+	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
 	return {
 		start: async(user:{username:string}, stream?:typeof MediaStream)=>{
 			console.log("start");
@@ -84,12 +86,16 @@ export const useLocalCam = (sendMessage:(data:any)=>void, setStream:(stream:type
 			}
 			if (type == "ICEcandidate" && response.data.target=='local')
 			  onICEcandidate(pcRef.current.pc, response)
-		  }
+		},
+		renderRTCView,
 	}
 }
 
-export const useRemoteCam = (sendMessage:(data:any)=>void, setStream:(stream:typeof MediaStream)=>void)=>{
+export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 	const pcRef = useRef<{pc?:RTCPeerConnection, user?:{username:string, id?:number}}>({})
+	const [_stream, setStream] = useState<MediaStream>()
+	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
+	const isPlay = useMemo(()=>_stream?true:false, [_stream])
 	return {
 		start: (username:string)=>{
 			console.log("start");
@@ -97,7 +103,9 @@ export const useRemoteCam = (sendMessage:(data:any)=>void, setStream:(stream:typ
 			  pcRef.current.pc = new RTCPeerConnection( peerConstraints );
 			  pcRef.current.user = {username}
 			}
-			sendMessage({type:'start', username, data:{}})
+			if (!_stream){
+				sendMessage({type:'start', username, data:{}})
+			}
 		},
 		stop: () => {
 			console.log("stop");
@@ -129,6 +137,8 @@ export const useRemoteCam = (sendMessage:(data:any)=>void, setStream:(stream:typ
 			}
 			if (type == "ICEcandidate" && response.data.target=='remote' && pcRef.current.user.id == response.sender)
 			  onICEcandidate(pcRef.current.pc, response)
-		}
+		},
+		renderRTCView,
+		isPlay
 	}
 }

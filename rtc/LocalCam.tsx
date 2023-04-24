@@ -1,23 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import {Button, View, Text} from "react-native";
-
 import useAuthContext from "./useAuthContext";
 import useWebsocketContext from "./useWebsocketContext";
-import { RTCView, MediaStream, useLocalCam, camStyle} from "./webrtcCommon";
+import { useLocalCam, camStyle} from "./webrtcCommon";
 
 
 export default ()=>{
-  const [stream, setStream] = useState<MediaStream>()
   const {user} = useAuthContext()
   const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
-  const {start, stop, websocketOnMessage} = useLocalCam(sendJsonMessage, setStream)
+  const {start, stop, websocketOnMessage, renderRTCView} = useLocalCam(sendJsonMessage)
   useEffect(()=>{
     lastJsonMessage && websocketOnMessage(lastJsonMessage, user)
   }, [lastJsonMessage])
   
   return (
     <View style={camStyle.container}>
-      {stream && <RTCView stream={stream} style={camStyle.cam} />}
+      {renderRTCView(camStyle.cam)}
       <View style={camStyle.bottonContainer}>
         <View style={camStyle.buttonBar}>
           <Text style={{flex:1}}>Username: {user?.username}</Text>

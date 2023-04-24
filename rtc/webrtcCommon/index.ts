@@ -1,5 +1,4 @@
 import {StyleSheet} from "react-native";
-export { RTCView, MediaStream } from "react-native-webrtc-web-shim"
 export {useLocalCam, useRemoteCam} from "./p2p"
 
 export const camStyle = StyleSheet.create({

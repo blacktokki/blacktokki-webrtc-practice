@@ -1,28 +1,22 @@
-import axios from "axios";
-import React, { useState, useRef, useEffect, } from "react";
+import React, { useState, useEffect, } from "react";
 import {Button,Text, TextInput, View} from "react-native";
 import useWebsocketContext from "./useWebsocketContext";
-import { RTCView, MediaStream, useRemoteCam, camStyle} from "./webrtcCommon";
+import { useRemoteCam, camStyle} from "./webrtcCommon";
 
 export default ()=>{
   const [username, setUsername] = useState('')
-  const [stream, setStream] = useState<MediaStream>()
   const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
-  const {start, stop, websocketOnMessage} = useRemoteCam(sendJsonMessage, setStream)
+  const {start, stop, websocketOnMessage, renderRTCView, isPlay} = useRemoteCam(sendJsonMessage)
   useEffect(()=>{
     lastJsonMessage && websocketOnMessage(lastJsonMessage)
   }, [lastJsonMessage])
-  const _start = ()=>{
-    if (!stream)
-      start(username)
-  }
 
   return (
     <View style={camStyle.container}>
-      {stream && <RTCView stream={stream} style={camStyle.cam} />}
+      {renderRTCView(camStyle.cam)}
       <View style={camStyle.bottonContainer}>
         <View style={camStyle.buttonBar}>
-          {stream?
+          {isPlay?
             <Text style={{borderWidth:1, flex:1}}>Username:{username}</Text>:
             <>
               <Text style={{borderWidth:1}}>Username:&nbsp;</Text>
@@ -31,7 +25,7 @@ export default ()=>{
           }
         </View>
         <View style={camStyle.buttonBar}>
-          <Button title="Start" onPress={_start} />
+          <Button title="Start" onPress={()=>start(username)} />
           <Button title="Stop" onPress={stop} />
         </View>
       </View>

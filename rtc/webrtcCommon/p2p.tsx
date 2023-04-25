@@ -17,7 +17,7 @@ export const sessionConstraints = {
 };
 export {MediaStream, RTCPeerConnection, RTCSessionDescription} from "react-native-webrtc-web-shim";
 
-const onICEcandidate = (pc:any, message:any)=>{
+const onICEcandidate = (pc:typeof RTCPeerConnection, message:any)=>{
 	const _message = message.data.rtcMessage
 		const candidate = new RTCIceCandidate(_message);
 		if (pc) {
@@ -35,40 +35,41 @@ const sendICEcandidate = (event, sendMessage, userId, target) => {
 	sendMessage({type:'ICEcandidate', user:userId, data:{target, rtcMessage:event.candidate}})
   }
 
-const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, user?:{id:number}}, sendMessage:(data:any)=>void, user?:{username:string})=>{
+const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, user?:{id:number}}, sendMessage:(data:any)=>void, owner?:{username:string})=>{
   pcRefCurrent.stream && pcRefCurrent.pc.addStream( pcRefCurrent.stream );
   const offerDescription = await pcRefCurrent.pc.createOffer( sessionConstraints );
   await pcRefCurrent.pc.setLocalDescription( offerDescription );
-  sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{username:user.username, rtcMessage:offerDescription}})
+  sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{username:owner.username, rtcMessage:offerDescription}})
 }
 
 export const useLocalCam = (sendMessage:(data:any)=>void)=>{
-	const pcRef = useRef<{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, user?:{id:number}}>({})
+	const pcRef = useRef<{pc?:typeof RTCPeerConnection, user?:{id:number}}>({})
 	const [_stream, setStream] = useState<MediaStream>()
 	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
-	return {
-		start: async(user:{username:string}, stream?:typeof MediaStream)=>{
-			console.log("start");
-			if (!pcRef.current.stream) {
-				try {
-					pcRef.current.stream = stream || await mediaDevices.getUserMedia({audio:true, video:true});
-					setStream(pcRef.current.stream)
-					if (pcRef.current.pc)
-					createOffer(pcRef.current, sendMessage, user)
-				} catch (e) {
-					console.error(e);
-				}
+	const start = useCallback(async(owner:{username:string}, stream?:typeof MediaStream)=>{
+		console.log("start");
+		if (!_stream) {
+			try {
+				const newStream = stream || await mediaDevices.getUserMedia({audio:true, video:true});
+				setStream(newStream)
+				if (pcRef.current.pc)
+					createOffer(pcRef.current, sendMessage, owner)
+			} catch (e) {
+				console.error(e);
 			}
-		},
-		stop: ()=>{
-			console.log("stop");
-			if(pcRef.current.stream){
-				pcRef.current.stream.getTracks().map(track => track.stop());
-				pcRef.current.stream = undefined
-				setStream(undefined)
-    		}
-		},
-		websocketOnMessage: async(response, user)=>{
+		}
+	}, [_stream])
+	const stop = useCallback(()=>{
+		console.log("stop");
+		if(_stream){
+			_stream.getTracks().map(track => track.stop());
+			setStream(undefined)
+		}
+	}, [_stream])
+	return {
+		start,
+		stop,
+		websocketOnMessage: async(response, owner)=>{
 			let type = response.type;
 			if (type == 'start'){
 			  console.log('1 start')
@@ -76,7 +77,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'remote'));
 			  pcRef.current.pc = peerConnection
 			  pcRef.current.user = {id:response.sender}
-			  createOffer(pcRef.current, sendMessage, user)
+			  createOffer(pcRef.current, sendMessage, owner)
 			}
 			
 			if (type == "answer"){
@@ -96,17 +97,18 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 	const [_stream, setStream] = useState<MediaStream>()
 	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
 	const isPlay = useMemo(()=>_stream?true:false, [_stream])
+	const start = useCallback((username:string)=>{
+		console.log("start");
+		if (!pcRef.current.pc) {
+		  pcRef.current.pc = new RTCPeerConnection( peerConstraints );
+		  pcRef.current.user = {username}
+		}
+		if (!_stream){
+			sendMessage({type:'start', username, data:{}})
+		}
+	}, [_stream])
 	return {
-		start: (username:string)=>{
-			console.log("start");
-			if (!pcRef.current.pc) {
-			  pcRef.current.pc = new RTCPeerConnection( peerConstraints );
-			  pcRef.current.user = {username}
-			}
-			if (!_stream){
-				sendMessage({type:'start', username, data:{}})
-			}
-		},
+		start,
 		stop: () => {
 			console.log("stop");
 			if (pcRef.current.pc) {

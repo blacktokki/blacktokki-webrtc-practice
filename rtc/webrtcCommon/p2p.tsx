@@ -35,17 +35,19 @@ const sendICEcandidate = (event, sendMessage, userId, target) => {
 	sendMessage({type:'ICEcandidate', user:userId, data:{target, rtcMessage:event.candidate}})
   }
 
-const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, stream?:typeof MediaStream, user?:{id:number}}, sendMessage:(data:any)=>void, owner?:{username:string})=>{
-  pcRefCurrent.stream && pcRefCurrent.pc.addStream( pcRefCurrent.stream );
+const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, user?:{id:number}}, sendMessage:(data:any)=>void, stream:typeof MediaStream, target, owner?:{username:string})=>{
+  stream && pcRefCurrent.pc.addStream( stream );
   const offerDescription = await pcRefCurrent.pc.createOffer( sessionConstraints );
   await pcRefCurrent.pc.setLocalDescription( offerDescription );
-  sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{username:owner.username, rtcMessage:offerDescription}})
+  sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{target, username:owner.username, rtcMessage:offerDescription}})
 }
 
 export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 	const pcRef = useRef<{pc?:typeof RTCPeerConnection, user?:{id:number}}>({})
 	const [_stream, setStream] = useState<MediaStream>()
+	// const [_mirrorStream, setMirrorStream] = useState<MediaStream>()
 	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
+	// const renderMirrorView = useCallback((style)=>_mirrorStream && <RTCView stream={_mirrorStream} style={style} /> , [_mirrorStream])
 	const start = useCallback(async(owner:{username:string}, stream?:typeof MediaStream)=>{
 		console.log("start");
 		if (!_stream) {
@@ -53,7 +55,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 				const newStream = stream || await mediaDevices.getUserMedia({audio:true, video:true});
 				setStream(newStream)
 				if (pcRef.current.pc)
-					createOffer(pcRef.current, sendMessage, owner)
+					createOffer(pcRef.current, sendMessage, newStream, 'remote', owner)
 			} catch (e) {
 				console.error(e);
 			}
@@ -71,24 +73,27 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 		stop,
 		websocketOnMessage: async(response, owner)=>{
 			let type = response.type;
-			if (type == 'start'){
+			if (type == 'start' && response.data.username == undefined){
 			  console.log('1 start')
 			  const peerConnection = new RTCPeerConnection( peerConstraints );
 			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'remote'));
 			  pcRef.current.pc = peerConnection
 			  pcRef.current.user = {id:response.sender}
-			  createOffer(pcRef.current, sendMessage, owner)
+			  createOffer(pcRef.current, sendMessage, _stream, 'remote', owner)
 			}
 			
-			if (type == "answer"){
+			if (type == "answer" && response.data.username == undefined){
 			  console.log('3 answer')
 			  const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
 			  await pcRef.current.pc.setRemoteDescription( answerDescription );
+			  // const streams = pcRef.current.pc.getRemoteStreams()
+			  // setMirrorStream(streams[streams.length - 1])
 			}
 			if (type == "ICEcandidate" && response.data.target=='local')
 			  onICEcandidate(pcRef.current.pc, response)
 		},
 		renderRTCView,
+		// renderMirrorView,
 	}
 }
 
@@ -121,6 +126,20 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 		},
 		websocketOnMessage: async(response)=>{
 			let type = response.type;
+			if (type == 'start' && response.data.username == pcRef.current.user.username){
+				console.log('(remote)1 start')
+				const peerConnection = pcRef.current.pc
+			  	pcRef.current.user.id = response.sender
+				peerConnection.addEventListener('icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'local'));
+				createOffer({pc:pcRef.current.pc, user:{id:response.sender}}, sendMessage, _stream, 'local', pcRef.current.user)
+			}  
+			if (type == "answer" && response.data.username == pcRef.current.user.username){
+				console.log('(remote)3 answer')
+				const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
+				await pcRef.current.pc.setRemoteDescription( answerDescription );
+				const streams = pcRef.current.pc.getRemoteStreams()
+				setStream(streams[streams.length - 1])
+			}
 			if (type == "call" && pcRef.current.user.username == response.data.username){
 			  console.log('2 call')
 			  const peerConnection = pcRef.current.pc

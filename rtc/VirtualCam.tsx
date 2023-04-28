@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import {Button, Platform, View, Text} from "react-native";
 import WebView from "react-native-webview";
 import useWebsocketContext from "./useWebsocketContext";
-import {useLocalCam, camStyle} from "./webrtcCommon";
-import {MediaStream, RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtcCommon/p2p"
+import {useLocalCam, camStyle} from "./webrtc";
+import {MediaStream, RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtc/p2p"
 import useAuthContext from "./useAuthContext";
 
 const useViatualCam = ()=>{

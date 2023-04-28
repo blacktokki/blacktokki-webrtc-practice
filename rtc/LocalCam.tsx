@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import {Button, View, Text} from "react-native";
 import useAuthContext from "./useAuthContext";
 import useWebsocketContext from "./useWebsocketContext";
-import { useLocalCam, camStyle} from "./webrtcCommon";
+import { useLocalCam, camStyle} from "./webrtc";
 
 
 export default ()=>{

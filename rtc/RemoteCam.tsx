@@ -1,7 +1,7 @@
 import React, { useState, useEffect, } from "react";
 import {Button,Text, TextInput, View} from "react-native";
 import useWebsocketContext from "./useWebsocketContext";
-import { useRemoteCam, camStyle} from "./webrtcCommon";
+import { useRemoteCam, camStyle} from "./webrtc";
 
 export default ()=>{
   const [username, setUsername] = useState('')

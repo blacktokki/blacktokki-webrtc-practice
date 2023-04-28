@@ -35,11 +35,28 @@ const sendICEcandidate = (event, sendMessage, userId, target) => {
 	sendMessage({type:'ICEcandidate', user:userId, data:{target, rtcMessage:event.candidate}})
   }
 
+const BAND_WIDTH = 8000
+
+const optimizeSdp = (offerDescription:RTCSessionDescription)=>{
+	var arr = offerDescription.sdp.split('\r\n');
+	arr.forEach((str, i) => {
+		if (/^a=fmtp:\d*/.test(str)) {
+			arr[i] = str + `;x-google-max-bitrate=${BAND_WIDTH};x-google-min-bitrate=${BAND_WIDTH};x-google-start-bitrate=${BAND_WIDTH}`;
+		} else if (/^a=mid:(0|video)/.test(str)) { // if with audio then 0=>1
+			arr[i] += `\r\nb=AS:${BAND_WIDTH}`;
+		}
+	});
+  	return new RTCSessionDescription({
+    	type: offerDescription.type,
+    	sdp: arr.join('\r\n'),
+  	})
+}
+
 const createOffer = async(pcRefCurrent:{pc?:typeof RTCPeerConnection, user?:{id:number}}, sendMessage:(data:any)=>void, stream:typeof MediaStream, target, owner?:{username:string})=>{
-  stream && pcRefCurrent.pc.addStream( stream );
-  const offerDescription = await pcRefCurrent.pc.createOffer( sessionConstraints );
-  await pcRefCurrent.pc.setLocalDescription( offerDescription );
-  sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{target, username:owner.username, rtcMessage:offerDescription}})
+	stream && pcRefCurrent.pc.addStream( stream );
+	const offerDescription = optimizeSdp((await pcRefCurrent.pc.createOffer( sessionConstraints )));
+	await pcRefCurrent.pc.setLocalDescription( offerDescription );
+	sendMessage({type:'call', user:pcRefCurrent.user?.id, data:{target, username:owner.username, rtcMessage:offerDescription}})
 }
 
 export const useLocalCam = (sendMessage:(data:any)=>void)=>{
@@ -52,7 +69,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 		console.log("start");
 		if (!_stream) {
 			try {
-				const newStream = stream || await mediaDevices.getUserMedia({audio:true, video:true});
+				const newStream = stream || await mediaDevices.getUserMedia({audio:true, video:true}).catch(e=>mediaDevices.getDisplayMedia({audio:true, video:{framerate:30}}));
 				setStream(newStream)
 				if (pcRef.current.pc)
 					createOffer(pcRef.current, sendMessage, newStream, 'remote', owner)
@@ -82,7 +99,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 			  createOffer(pcRef.current, sendMessage, _stream, 'remote', owner)
 			}
 			
-			if (type == "answer" && response.data.username == undefined){
+			if (type == "answer" && response.data.target == 'local'){
 			  console.log('3 answer')
 			  const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
 			  await pcRef.current.pc.setRemoteDescription( answerDescription );
@@ -98,7 +115,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 }
 
 export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
-	const pcRef = useRef<{pc?:RTCPeerConnection, user?:{username:string, id?:number}}>({})
+	const pcRef = useRef<{pc?:RTCPeerConnection, user?:{username:string, id?:number}, statsInterval?:any}>({})
 	const [_stream, setStream] = useState<MediaStream>()
 	const renderRTCView = useCallback((style)=>_stream && <RTCView stream={_stream} style={style} /> , [_stream])
 	const isPlay = useMemo(()=>_stream?true:false, [_stream])
@@ -112,33 +129,71 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 			sendMessage({type:'start', username, data:{}})
 		}
 	}, [_stream])
+	const stop = () => {
+		console.log("stop");
+		if (pcRef.current.pc) {
+		  // peerConnection._unregisterEvents();
+		  setStream(undefined)
+		  pcRef.current.pc.close();
+		  pcRef.current.pc = undefined
+		  pcRef.current.user = undefined
+		  clearInterval(pcRef.current.statsInterval)
+		}
+	}
 	return {
 		start,
-		stop: () => {
-			console.log("stop");
-			if (pcRef.current.pc) {
-			  // peerConnection._unregisterEvents();
-			  setStream(undefined)
-			  pcRef.current.pc.close();
-			  pcRef.current.pc = undefined
-			  pcRef.current.user = undefined
-			}
-		},
+		stop,
 		websocketOnMessage: async(response)=>{
 			let type = response.type;
-			if (type == 'start' && response.data.username == pcRef.current.user.username){
+			if (type == 'start' && response.data.username && response.data.username == pcRef.current.user.username){
 				console.log('(remote)1 start')
 				const peerConnection = pcRef.current.pc
 			  	pcRef.current.user.id = response.sender
 				peerConnection.addEventListener('icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'local'));
-				createOffer({pc:pcRef.current.pc, user:{id:response.sender}}, sendMessage, _stream, 'local', pcRef.current.user)
+				peerConnection.addEventListener('iceconnectionstatechange', e=>{
+					if (pcRef.current.pc.iceConnectionState == 'connected'){
+						let activeStream = false
+						pcRef.current.statsInterval = setInterval(async()=>{
+							const stats = await pcRef.current.pc.getStats(null)
+							let statsOutput = "";
+							let framePerSecond = undefined
+							stats.forEach((report) => {
+								if (report.type === "inbound-rtp" && report.kind === "video") {
+									Object.keys(report).forEach((statName) => {
+										statsOutput += `${statName}: ${report[statName]}\n`;
+									});
+									framePerSecond = report.framesPerSecond
+								}
+							});
+							console.log(activeStream, framePerSecond)
+							if (framePerSecond != undefined){
+								activeStream = true
+							}
+							else if (activeStream){
+								stop()
+							}
+							console.log(new Date().toTimeString().split(' ')[0], statsOutput)
+						}, 1000);
+					}
+					else if (pcRef.current.pc.iceConnectionState == 'failed'){
+						stop()
+					}
+				})
+				// peerConnection.addTransceiver('audio', {
+				// 	direction: 'recvonly'
+				// });
+				peerConnection.addTransceiver('video', {
+					direction: 'recvonly'
+				});
+				await createOffer({pc:pcRef.current.pc, user:{id:response.sender}}, sendMessage, _stream, 'local', pcRef.current.user)
 			}  
-			if (type == "answer" && response.data.username == pcRef.current.user.username){
+			if (type == "answer" && response.data.target=='remote' && response.sender == pcRef.current.user.id){
 				console.log('(remote)3 answer')
 				const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
 				await pcRef.current.pc.setRemoteDescription( answerDescription );
 				const streams = pcRef.current.pc.getRemoteStreams()
 				setStream(streams[streams.length - 1])
+				sendMessage({type:'end', username:pcRef.current.user.username, data:{}})
 			}
 			if (type == "call" && pcRef.current.user.username == response.data.username){
 			  console.log('2 call')
@@ -151,7 +206,7 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 			  await peerConnection.setRemoteDescription( offerDescription );
 			  const answerDescription = await peerConnection.createAnswer( sessionConstraints );
 			  await peerConnection.setLocalDescription( answerDescription );
-			  sendMessage({type:'answer', user:pcRef.current.user?.id, data:{rtcMessage:peerConnection.localDescription}})
+			  sendMessage({type:'answer', user:pcRef.current.user?.id, data:{target:'local', rtcMessage:peerConnection.localDescription}})
 			  // Here is a good place to process candidates.
 			  const streams = pcRef.current.pc.getRemoteStreams()
 			  setStream(streams[streams.length - 1])

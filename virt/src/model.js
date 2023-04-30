@@ -14,12 +14,38 @@ const {
   
   const params = {
       lerpAmount: 0.6,//반응속도
-      bodyDampener:0.3
+      bodyDampener:0.3,
+      positionY: 0.5,
+      //positionY: 0.8
   }
   
    // Url to Live2D
-   const modelUrl = "./models/hiyori/hiyori_pro_t10.model3.json";
-    
+   //const modelUrl = "./models/hiyori/hiyori_pro_t10.model3.json";
+   const modelUrl = "./models/haruto/haruto.model3.json";
+   // const modelUrl = "./models/koharu/koharu.model3.json";
+
+  // motion parameters
+  const PARAM_NAMES = [
+    "PARAM_EYE_BALL_X",
+    "PARAM_EYE_BALL_Y",
+    "PARAM_ANGLE_X",
+    "PARAM_ANGLE_Y",
+    "PARAM_ANGLE_Z",
+    "PARAM_BODY_ANGLE_X",
+    "PARAM_BODY_ANGLE_Y",
+    "PARAM_BODY_ANGLE_Z",
+    "PARAM_MOUTH_OPEN_Y",
+    "PARAM_EYE_L_OPEN",
+    "PARAM_EYE_R_OPEN",
+    "PARAM_MOUTH_FORM"
+  ]
+  const motion_params = PARAM_NAMES.reduce((prev, curr)=>{
+    prev[curr]=curr;
+    // prev[curr] = curr.split('_').map(v=>v.toLowerCase()).map(v=>v.charAt(0).toUpperCase() + v.slice(1)).join('')
+    return prev
+  }, {})
+  
+
    let currentModel, facemesh;
   
    const videoElement = document.querySelector(".input_video"),
@@ -77,49 +103,49 @@ const {
         currentModel.internalModel.eyeBlink = undefined;
   
         coreModel.setParameterValueById(
-            "ParamEyeBallX",
-            lerp(result.pupil.x, coreModel.getParameterValueById("ParamEyeBallX"), lerpAmount)
+            motion_params.PARAM_EYE_BALL_X,
+            lerp(result.pupil.x, coreModel.getParameterValueById(motion_params.PARAM_EYE_BALL_X), lerpAmount)
         );
         coreModel.setParameterValueById(
-            "ParamEyeBallY",
-            lerp(result.pupil.y, coreModel.getParameterValueById("ParamEyeBallY"), lerpAmount)
+            motion_params.PARAM_EYE_BALL_Y,
+            lerp(result.pupil.y, coreModel.getParameterValueById(motion_params.PARAM_EYE_BALL_Y), lerpAmount)
         );
   
         // X and Y axis rotations are swapped for Live2D parameters
         // because it is a 2D system and KalidoKit is a 3D system
         coreModel.setParameterValueById(
-            "ParamAngleX",
-            lerp(result.head.degrees.y, coreModel.getParameterValueById("ParamAngleX"), lerpAmount)
+            motion_params.PARAM_ANGLE_X,
+            lerp(result.head.degrees.y, coreModel.getParameterValueById(motion_params.PARAM_ANGLE_X), lerpAmount)
         );
         coreModel.setParameterValueById(
-            "ParamAngleY",
-            lerp(result.head.degrees.x, coreModel.getParameterValueById("ParamAngleY"), lerpAmount)
+            motion_params.PARAM_ANGLE_Y,
+            lerp(result.head.degrees.x, coreModel.getParameterValueById(motion_params.PARAM_ANGLE_Y), lerpAmount)
         );
         coreModel.setParameterValueById(
-            "ParamAngleZ",
-            lerp(result.head.degrees.z, coreModel.getParameterValueById("ParamAngleZ"), lerpAmount)
+            motion_params.PARAM_ANGLE_Z,
+            lerp(result.head.degrees.z, coreModel.getParameterValueById(motion_params.PARAM_ANGLE_Z), lerpAmount)
         );
   
         // update body params for models without head/body param sync
         coreModel.setParameterValueById(
-            "ParamBodyAngleX",
-            lerp(result.head.degrees.y * params.bodyDampener, coreModel.getParameterValueById("ParamBodyAngleX"), lerpAmount)
+            motion_params.PARAM_BODY_ANGLE_X,
+            lerp(result.head.degrees.y * params.bodyDampener, coreModel.getParameterValueById(motion_params.PARAM_BODY_ANGLE_X), lerpAmount)
         );
         coreModel.setParameterValueById(
-            "ParamBodyAngleY",
-            lerp(result.head.degrees.x * params.bodyDampener, coreModel.getParameterValueById("ParamBodyAngleY"), lerpAmount)
+            motion_params.PARAM_BODY_ANGLE_Y,
+            lerp(result.head.degrees.x * params.bodyDampener, coreModel.getParameterValueById(motion_params.PARAM_BODY_ANGLE_Y), lerpAmount)
         );
         coreModel.setParameterValueById(
-            "ParamBodyAngleZ",
-            lerp(result.head.degrees.z * params.bodyDampener, coreModel.getParameterValueById("ParamBodyAngleZ"), lerpAmount)
+            motion_params.PARAM_BODY_ANGLE_Z,
+            lerp(result.head.degrees.z * params.bodyDampener, coreModel.getParameterValueById(motion_params.PARAM_BODY_ANGLE_Z), lerpAmount)
         );
   
         // Simple example without winking.
         // Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
         let stabilizedEyes = Kalidokit.Face.stabilizeBlink(
             {
-                l: lerp(result.eye.l, coreModel.getParameterValueById("ParamEyeLOpen"), 0.7),
-                r: lerp(result.eye.r, coreModel.getParameterValueById("ParamEyeROpen"), 0.7),
+                l: lerp(result.eye.l, coreModel.getParameterValueById(motion_params.PARAM_EYE_L_OPEN), 0.7),
+                r: lerp(result.eye.r, coreModel.getParameterValueById(motion_params.PARAM_EYE_R_OPEN), 0.7),
             },
             result.head.y,
             {
@@ -128,18 +154,18 @@ const {
             }
         );
         // eye blink
-        coreModel.setParameterValueById("ParamEyeLOpen", stabilizedEyes.l);
-        coreModel.setParameterValueById("ParamEyeROpen", stabilizedEyes.r);
+        coreModel.setParameterValueById(motion_params.PARAM_EYE_L_OPEN, stabilizedEyes.l);
+        coreModel.setParameterValueById(motion_params.PARAM_EYE_R_OPEN, stabilizedEyes.r);
   
         // mouth
         coreModel.setParameterValueById(
-            "ParamMouthOpenY",
-            lerp(result.mouth.y, coreModel.getParameterValueById("ParamMouthOpenY"), 0.3)
+            motion_params.PARAM_MOUTH_OPEN_Y,
+            lerp(result.mouth.y, coreModel.getParameterValueById(motion_params.PARAM_MOUTH_OPEN_Y), 0.3)
         );
         // Adding 0.3 to ParamMouthForm to make default more of a "smile"
         coreModel.setParameterValueById(
-            "ParamMouthForm",
-            0.3 + lerp(result.mouth.x, coreModel.getParameterValueById("ParamMouthForm"), 0.3)
+            motion_params.PARAM_MOUTH_FORM,
+            0.3 + lerp(result.mouth.x, coreModel.getParameterValueById(motion_params.PARAM_MOUTH_FORM), 0.3)
         );
     };
   };
@@ -172,7 +198,7 @@ const {
   currentModel.scale.set(0.3 * (window.innerHeight/768));
   currentModel.interactive = true;
   currentModel.anchor.set(0.5, 0.5);
-  currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.8);
+  currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.5);
   
   // Add events to drag model
 //   currentModel.on("pointerdown", (e) => {

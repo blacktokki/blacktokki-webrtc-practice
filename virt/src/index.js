@@ -9,9 +9,11 @@
 
 // document.body.appendChild(component());
 import "./index.css"
-import { currentModel } from "./model"
+import { currentModel, startModel } from "./model"
 import "./rtc"
+import {setLoadModelEvent} from "./fs"
 
 addEventListener('resize', (event) => {
-    currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.8);
+    currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.5);
 });
+setLoadModelEvent(startModel)

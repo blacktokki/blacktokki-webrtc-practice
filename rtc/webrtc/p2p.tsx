@@ -72,7 +72,7 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 				const newStream = stream || await mediaDevices.getUserMedia({audio:true, video:true}).catch(e=>mediaDevices.getDisplayMedia({audio:true, video:{framerate:30}}));
 				setStream(newStream)
 				if (pcRef.current.pc)
-					createOffer(pcRef.current, sendMessage, newStream, 'remote', owner)
+					createOffer(pcRef.current, sendMessage, newStream, 'guest', owner)
 			} catch (e) {
 				console.error(e);
 			}
@@ -93,20 +93,20 @@ export const useLocalCam = (sendMessage:(data:any)=>void)=>{
 			if (type == 'start' && response.data.username == undefined){
 			  console.log('1 start')
 			  const peerConnection = new RTCPeerConnection( peerConstraints );
-			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'remote'));
+			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'guest'));
 			  pcRef.current.pc = peerConnection
 			  pcRef.current.user = {id:response.sender}
-			  createOffer(pcRef.current, sendMessage, _stream, 'remote', owner)
+			  createOffer(pcRef.current, sendMessage, _stream, 'guest', owner)
 			}
 			
-			if (type == "answer" && response.data.target == 'local'){
+			if (type == "answer" && response.data.target == 'host'){
 			  console.log('3 answer')
 			  const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
 			  await pcRef.current.pc.setRemoteDescription( answerDescription );
 			  // const streams = pcRef.current.pc.getRemoteStreams()
 			  // setMirrorStream(streams[streams.length - 1])
 			}
-			if (type == "ICEcandidate" && response.data.target=='local')
+			if (type == "ICEcandidate" && response.data.target=='host')
 			  onICEcandidate(pcRef.current.pc, response)
 		},
 		renderRTCView,
@@ -149,7 +149,7 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 				console.log('(remote)1 start')
 				const peerConnection = pcRef.current.pc
 			  	pcRef.current.user.id = response.sender
-				peerConnection.addEventListener('icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'local'));
+				peerConnection.addEventListener('icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'host'));
 				peerConnection.addEventListener('iceconnectionstatechange', e=>{
 					if (pcRef.current.pc.iceConnectionState == 'connected'){
 						let activeStream = false
@@ -185,9 +185,9 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 				peerConnection.addTransceiver('video', {
 					direction: 'recvonly'
 				});
-				await createOffer({pc:pcRef.current.pc, user:{id:response.sender}}, sendMessage, _stream, 'local', pcRef.current.user)
+				await createOffer({pc:pcRef.current.pc, user:{id:response.sender}}, sendMessage, _stream, 'host', pcRef.current.user)
 			}  
-			if (type == "answer" && response.data.target=='remote' && response.sender == pcRef.current.user.id){
+			if (type == "answer" && response.data.target=='guest' && response.sender == pcRef.current.user.id){
 				console.log('(remote)3 answer')
 				const answerDescription = new RTCSessionDescription(response.data.rtcMessage);
 				await pcRef.current.pc.setRemoteDescription( answerDescription );
@@ -201,17 +201,17 @@ export const useRemoteCam = (sendMessage:(data:any)=>void)=>{
 			  pcRef.current.user.id = response.sender
 			  if (!peerConnection)
 				return
-			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'local'));
+			  peerConnection.addEventListener( 'icecandidate', event => sendICEcandidate(event, sendMessage, response.sender, 'host'));
 			  const offerDescription = new RTCSessionDescription(response.data.rtcMessage);
 			  await peerConnection.setRemoteDescription( offerDescription );
 			  const answerDescription = await peerConnection.createAnswer( sessionConstraints );
 			  await peerConnection.setLocalDescription( answerDescription );
-			  sendMessage({type:'answer', user:pcRef.current.user?.id, data:{target:'local', rtcMessage:peerConnection.localDescription}})
+			  sendMessage({type:'answer', user:pcRef.current.user?.id, data:{target:'host', rtcMessage:peerConnection.localDescription}})
 			  // Here is a good place to process candidates.
 			  const streams = pcRef.current.pc.getRemoteStreams()
 			  setStream(streams[streams.length - 1])
 			}
-			if (type == "ICEcandidate" && response.data.target=='remote' && pcRef.current.user.id == response.sender)
+			if (type == "ICEcandidate" && response.data.target=='guest' && pcRef.current.user.id == response.sender)
 			  onICEcandidate(pcRef.current.pc, response)
 		},
 		renderRTCView,

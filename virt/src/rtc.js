@@ -3,8 +3,6 @@ const canvas = document.querySelector('#live2d');
 const stream = canvas.captureStream();
 const streamData = JSON.stringify(stream.getVideoTracks())
 
-
-///webrtcCommon.ts
 const peerConstraints = {
 	iceServers: [
 		{
@@ -20,7 +18,6 @@ const sessionConstraints = {
 		VoiceActivityDetection: true
 	}
 };
-///webrtcCommon.ts end
 
 const send = async(data)=>{
     if (window.ReactNativeWebView) 

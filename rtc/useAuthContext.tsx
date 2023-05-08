@@ -2,12 +2,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 // @ts-ignore
 import {API_URL} from "@env"
 import axios from "axios";
-const AuthContext = createContext<{user:any, token:string}>({user:{}, token:''})
+const AuthContext = createContext<{user:any, token:string|null}>({user:{}, token:null})
 export const ENDPOINT = `${API_URL}/messenger`
 
 export const AuthProvider = ({children}:{children:React.ReactNode})=>{
     const [user, setUser] = useState()
-    const [token, setToken] = useState()
+    const [token, setToken] = useState(null)
     useEffect(()=>{
         axios.post(`${ENDPOINT}/api-token-auth/`, {username:'guest', password:'guest'}, {withCredentials:true}).then(r=>{
           if(r.status == 200){  

@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import {Button, Platform, View, Text} from "react-native";
 import WebView from "react-native-webview";
+import useAuthContext from "./useAuthContext";
 import useWebsocketContext from "./useWebsocketContext";
 import {useLocalCam, camStyle} from "./webrtc";
 import {MediaStream, RTCPeerConnection, RTCSessionDescription, peerConstraints, sessionConstraints} from "./webrtc/p2p"
-import useAuthContext from "./useAuthContext";
 
 const useViatualCam = ()=>{
-  const webViewRef = useRef()
+  const webViewRef = useRef(null)
   const pcRef = useRef<{pc?:RTCPeerConnection}>({})
   const [stream, setStream] = useState<MediaStream>()
-  const send = (data)=>{
+  const send = (data:any)=>{
     if (Platform.OS == 'web')
       (webViewRef.current as any).contentWindow.postMessage(JSON.stringify(data), 'http://localhost:3001/')
     else
@@ -22,7 +22,7 @@ const useViatualCam = ()=>{
       console.log('(virtual)2 call_received')
       const peerConnection = new RTCPeerConnection( peerConstraints );
       pcRef.current.pc = peerConnection
-      peerConnection.addEventListener( 'icecandidate', event => {
+      peerConnection.addEventListener( 'icecandidate', (event:any) => {
         if ( !event.candidate ) { return; };
         send({type:'ICEcandidate', data:{rtcMessage:event.candidate}})
       });
@@ -43,7 +43,7 @@ const useViatualCam = ()=>{
       console.log("(virtual)", data)
     }
   }
-  const listener = (event)=>{
+  const listener = (event:any)=>{
     if(Platform.OS == 'web'){
       try{
         // console.log('parent receive', event.data)
@@ -70,14 +70,14 @@ export default ()=>{
   const {webViewRef, stream, listener, virtualStop} = useViatualCam()
   const [active, setActive] = useState(false)
   //localCam code
-  const {user} = useAuthContext()
+  const auth = useAuthContext()
   const {lastJsonMessage, sendJsonMessage} = useWebsocketContext()
   const {start, stop, websocketOnMessage} = useLocalCam(sendJsonMessage)
   useEffect(()=>{
-    lastJsonMessage && websocketOnMessage(lastJsonMessage, user)
-  }, [lastJsonMessage])
+    auth.user && lastJsonMessage && websocketOnMessage(lastJsonMessage, auth.user)
+  }, [auth, lastJsonMessage])
   useEffect(()=>{
-    start(user, stream)
+    auth.user && start(auth.user, stream)
   },[stream])
   const _stop = ()=>{
     stop()
@@ -111,7 +111,7 @@ export default ()=>{
       undefined}
       <View style={camStyle.bottonContainer}>
         <View style={camStyle.buttonBar}>
-          <Text style={{flex:1}}>{user?.username}</Text>
+          <Text style={{flex:1}}>{auth.user?.username}</Text>
         </View>
         <View style={camStyle.buttonBar}>
             <Button title="Start" onPress={()=>setActive(true)} />

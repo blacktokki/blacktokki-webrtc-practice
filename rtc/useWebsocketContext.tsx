@@ -1,29 +1,32 @@
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React, { Context, createContext, useContext, useEffect, useState } from "react"
 import useWebSocket from "react-use-websocket"
 // @ts-ignore
 import {API_URL} from "@env"
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import useAuthContext from "./useAuthContext";
-
-const WebSocketContext = createContext<{lastJsonMessage:any, sendJsonMessage:SendJsonMessage }>({lastJsonMessage:null, sendJsonMessage:()=>{}});
 const [SCHEMA, DOMAIN] = `${API_URL}`.split('://')
 
-const WebSocketProviderInternal = ({token, children}:{token:string, children:React.ReactNode})=>{
-  const { lastJsonMessage, sendJsonMessage } = useWebSocket(`${SCHEMA=='https'?'wss':'ws'}://${DOMAIN}/messenger/ws/rtc/`,{
+type WebsocketContextType = {lastJsonMessage:any, sendJsonMessage:SendJsonMessage }
+const WebSocketInternalProvider = ({children, path, Context, useBackground}:{children:React.ReactNode, path:string, Context:Context<WebsocketContextType>, useBackground?:boolean})=>{
+  const {token} = useAuthContext()
+  const { lastJsonMessage, sendJsonMessage } = useWebSocket(`${SCHEMA=='https'?'wss':'ws'}://${DOMAIN}/${path}`,{
     shouldReconnect: (closeEvent) => true,
-    protocols: ['Authorization', token],
-    onOpen: (e)=>{console.log('success websocket connection')}
-  })
-  return <WebSocketContext.Provider value={{lastJsonMessage, sendJsonMessage}}>
-  {children}
-</WebSocketContext.Provider>
+    protocols: token?['Authorization',  token]:undefined,
+    onOpen: (e)=>{console.log(`success websocket connection(${path})`)},
+    onClose: (e)=> {console.log(`closed websocket connection(${path})`)},
+  }, token!=null)
+  return (token==null)?<>{children}</>:<Context.Provider value={{lastJsonMessage, sendJsonMessage}}>
+      {children}
+    </Context.Provider>
 }
 
+
+const WebSocketContext = createContext<{lastJsonMessage:any, sendJsonMessage:SendJsonMessage }>({lastJsonMessage:undefined, sendJsonMessage:()=>{}});
+
 export const WebSocketProvider = ({disable, children}:{disable?:boolean, children:React.ReactNode})=>{
-  const {token} = useAuthContext()
-  return (disable || !token)?<>{children}</>:<WebSocketProviderInternal token={token}>
+  return disable?<></>:<WebSocketInternalProvider path={'messenger/ws/rtc/'} Context={WebSocketContext} useBackground>
     {children}
-  </WebSocketProviderInternal>
+  </WebSocketInternalProvider>
 }
 
 export default ()=>{

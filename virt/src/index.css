@@ -6,8 +6,8 @@
 .preview {
   display: flex;
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 15px;
+  right: 15px;
   padding: 28px 0 0;
 }
 .display {
@@ -49,11 +49,19 @@ canvas {
   video {
       max-width: 200px;
   }
+  .preview {
+    bottom: 10px;
+    right: 10px;
+  }
 }
 
 @media only screen and (max-width: 480px) {
   video {
       max-width: 100px;
+  }
+  .preview {
+    bottom: 5px;
+    right: 5px;
   }
 }
 

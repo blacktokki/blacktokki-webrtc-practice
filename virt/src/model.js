@@ -35,15 +35,34 @@ const PARAM_NAMES = [
 let motion_param_case = 0
 const motion_params = {}
 
-let currentModel, facemesh;
+let currentModel, facemesh, zoom=0.3, positionY=0.5;
 
-const videoElement = document.querySelector(".input_video"),
-guideCanvas = document.querySelector("canvas.guides");
+const videoElement = document.querySelector(".input_video");
+const guideCanvas = document.querySelector("canvas.guides");
 
 const onResults = (results) => {
     drawResults(results.multiFaceLandmarks[0]);
     animateLive2DModel(results.multiFaceLandmarks[0]);
 };
+
+const addZoom = (add)=>{
+    zoom += add
+    currentModel?.scale.set(zoom * (window.innerHeight/1080));
+}
+const addPosition =(x, y)=>{
+    positionY += y
+    currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * positionY);
+}
+
+const toggleDisplay = () =>{
+    const display = document.querySelector(".display");
+    if(videoElement.style.display !='none'){
+        videoElement.style.display = 'none'
+    }
+    else{
+        videoElement.style.display = 'block'
+    }
+}
 
 // draw connectors and landmarks on output canvas
 const drawResults = (points) => {
@@ -182,10 +201,10 @@ const startModel = async(modelUrl)=>{
         }
     })
 
-    currentModel.scale.set(0.3 * (window.innerHeight/1080));
+    addZoom(0)
     currentModel.interactive = true;
     currentModel.anchor.set(0.5, 0.5);
-    currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.5);
+    addPosition(0, 0)
 
     // Add events to drag model
     //   currentModel.on("pointerdown", (e) => {
@@ -218,8 +237,8 @@ const startCamera = () => {
         onFrame: async () => {
             await facemesh.send({ image: videoElement });
         },
-        width: 640,
-        height: 480,
+        width: 1280,
+        height: 720,
     });
     camera.start();
 };
@@ -248,6 +267,8 @@ startCamera();
 })();
 
 export {
-currentModel,
+addZoom,
+addPosition,
+toggleDisplay,
 startModel
 }

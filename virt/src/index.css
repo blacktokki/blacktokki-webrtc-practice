@@ -5,20 +5,27 @@
 }
 .preview {
   display: flex;
-  flex-direction: column;
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  bottom: 10px;
+  right: 10px;
+  padding: 28px 0 0;
+}
+.display {
+  display: flex;
   overflow: hidden;
   border-radius: 8px;
   background: #222;
 }
+.menu {
+  position: absolute;
+  width: 233px;
+  top: 0px;
+  right: 0px;
+  z-index: 2;
+}
 video {
   max-width: 400px;
   height: auto;
-  transform: scale(-1, 1);
-}
-.preview canvas {
   transform: scale(-1, 1);
 }
 body {
@@ -35,6 +42,7 @@ canvas {
   height: auto;
   width: 100%;
   z-index: 1;
+  transform: scale(-1, 1);
 }
 
 @media only screen and (max-width: 960px) {

@@ -23,7 +23,7 @@ const send = async(data)=>{
     if (window.ReactNativeWebView) 
         window.ReactNativeWebView.postMessage(JSON.stringify(data))
     else
-        window.parent.postMessage(JSON.stringify(data), "http://localhost:19006/")
+        window.parent.postMessage(JSON.stringify(data), /*"http://localhost:19006/"*/ undefined)
 }
 
 const listener = sendData => {

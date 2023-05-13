@@ -9,11 +9,17 @@
 
 // document.body.appendChild(component());
 import "./index.css"
-import { currentModel, startModel } from "./model"
+import { addZoom, addPosition, toggleDisplay, startModel, } from "./model"
 import "./rtc"
 import {setLoadModelEvent} from "./fs"
 
-addEventListener('resize', (event) => {
-    currentModel.position.set(window.innerWidth * 0.5, window.innerHeight * 0.5);
+document.querySelector('#zoomin').onclick = ()=>addZoom(0.05)
+document.querySelector('#zoomout').onclick =()=>addZoom(-0.05)
+document.querySelector('#moveup').onclick = ()=>addPosition(0, 0.05)
+document.querySelector('#movedown').onclick =()=>addPosition(0, -0.05)
+document.querySelector('#display').onclick = ()=>toggleDisplay()
+addEventListener('resize', ()=>{
+    addPosition(0, 0)
+    addZoom(0)
 });
 setLoadModelEvent(startModel)

@@ -41,11 +41,18 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <div class="preview">
-      <div>
-        <button id="append">📁</button>
+      <div class="display">
+        <video class="input_video" width="1280px" height="720px"></video>
+        <canvas class="guides"></canvas>
       </div>
-      <video class="input_video" width="1280px" height="720px"></video>
-      <canvas class="guides"></canvas>
+      <div class="menu">
+        <button id="append">📁</button>
+        <button id="zoomin">➕</button>
+        <button id="zoomout">➖</button>
+        <button id="moveup">🔼</button>
+        <button id="movedown">🔽</button>
+        <button id="display">📹</button>
+      </div>
     </div>
     <canvas id="live2d"></canvas>
   </body>

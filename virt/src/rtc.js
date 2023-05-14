@@ -43,7 +43,10 @@ const listener = sendData => {
     }
 }
 const nativeListener = event => {
-    // console.log('child receive', event.data)
+    //console.log('child receive', event.data)
+    if (event.data.startsWith?.('setImmediate')){
+        return
+    }
     if (event.data.type!= 'webpackOk') listener(JSON.parse(event.data))
 }
 

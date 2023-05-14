@@ -15,8 +15,8 @@ import {setLoadModelEvent} from "./fs"
 
 document.querySelector('#zoomin').onclick = ()=>addZoom(0.05)
 document.querySelector('#zoomout').onclick =()=>addZoom(-0.05)
-document.querySelector('#moveup').onclick = ()=>addPosition(0, -0.05)
-document.querySelector('#movedown').onclick =()=>addPosition(0, 0.05)
+document.querySelector('#moveup').onclick = ()=>addPosition(0, -0.04)
+document.querySelector('#movedown').onclick =()=>addPosition(0, 0.04)
 document.querySelector('#display').onclick = ()=>toggleDisplay()
 addEventListener('resize', ()=>{
     addPosition(0, 0)

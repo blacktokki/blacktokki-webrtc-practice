@@ -36,6 +36,7 @@
     <link rel="stylesheet" href="index.css">
     <title>React App</title>
     <script src="https://unpkg.com/lodash@4.17.20"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -46,12 +47,18 @@
         <canvas class="guides"></canvas>
       </div>
       <div class="menu">
-        <button id="append">📁</button>
-        <button id="zoomin">➕</button>
-        <button id="zoomout">➖</button>
-        <button id="moveup">🔼</button>
-        <button id="movedown">🔽</button>
-        <button id="display">📹</button>
+        <div class="menu_row">
+          <button id="append">📁</button>
+          <button id="prevmodel">◀️</button>
+          <button id="nextmodel">▶️</button>
+          <button id="display">📹</button>
+        </div>
+        <div class="menu_row">
+          <button id="zoomin">➕</button>
+          <button id="zoomout">➖</button>
+          <button id="moveup">⬆️</button>
+          <button id="movedown">⬇️</button>
+        </div>
       </div>
     </div>
     <canvas id="live2d"></canvas>

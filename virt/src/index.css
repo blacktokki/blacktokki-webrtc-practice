@@ -8,7 +8,7 @@
   position: absolute;
   bottom: 15px;
   right: 15px;
-  padding: 28px 0 0;
+  padding: 50px 0 0;
 }
 .display {
   display: flex;
@@ -18,10 +18,13 @@
 }
 .menu {
   position: absolute;
-  display: flex;
   top: 0px;
   right: 0px;
   z-index: 2;
+}
+.menu_row {
+  display: flex;
+  white-space : nowrap
 }
 video {
   max-width: 400px;

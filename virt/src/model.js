@@ -35,7 +35,7 @@ const PARAM_NAMES = [
 let motion_param_case = 0
 const motion_params = {}
 
-let currentModel, facemesh, zoom=0.3, positionY=0.5;
+let currentModel, zoom=0.3, positionY=0.5;
 
 const videoElement = document.querySelector(".input_video");
 const guideCanvas = document.querySelector("canvas.guides");
@@ -231,39 +231,40 @@ const startModel = async(modelUrl)=>{
     app.stage.addChild(currentModel);
 }
 
-// start camera using mediapipe camera utils
-const startCamera = () => {
+(async function main() {  
+    // create media pipe facemesh instance
+    const facemesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        },
+    });
+
+    // set facemesh config
+    facemesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: false, //desktop =>true
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.75,
+    });
+
+    // pass facemesh callback function
+    facemesh.onResults(onResults);
+
+    // start camera using mediapipe camera utils
+    let fps = 0
     const camera = new Camera(videoElement, {
         onFrame: async () => {
+            // fps += 1
             await facemesh.send({ image: videoElement });
         },
-        width: 1280,
-        height: 720,
+        width: 640,
+        height: 360,
     });
     camera.start();
-};
-;
-
-
-(async function main() {  
-// create media pipe facemesh instance
-facemesh = new FaceMesh({
-    locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-    },
-});
-
-// set facemesh config
-facemesh.setOptions({
-    maxNumFaces: 1,
-    refineLandmarks: true,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.75,
-});
-
-// pass facemesh callback function
-facemesh.onResults(onResults);
-startCamera();
+    // setInterval(()=>{
+    //     document.querySelector("#fps").innerText = fps
+    //     fps = 0
+    // }, 1000)
 })();
 
 export {
